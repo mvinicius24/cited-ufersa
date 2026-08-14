@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Solicitação de Análises e Medidas - LSRX / UFERSA</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .form-container {
+            background-color: #ffffff;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 700px;
+        }
+
+        /* Estilo do Cabeçalho Textual */
+        .institutional-header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        .header-title {
+            color: #0f172a;
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1.3;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .header-subtitle {
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .header-text {
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: justify;
+        }
+
+        .header-institution {
+            color: #0f172a;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px
+        }
+
+        .section-title {
+            font-size: 16px;
+            color: #225874;
+            margin: 25px 0 12px 0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #334155;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+            color: #334155;
+            transition: all 0.3s ease;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #0284c7;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+            outline: none;
+        }
+
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .radio-option, .checkbox-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 15px;
+            color: #334155;
+            cursor: pointer;
+        }
+
+        .conditional-box {
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .declaracao-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #0284c7;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    
+    <!-- Cabeçalho Textual -->
+    <div class="institutional-header">
+        <div class="header-title">FORMULÁRIO E SISTEMA DE SOLICITAÇÃO DE ANÁLISES E MEDIDAS</div>
+        <div class="header-subtitle">Laboratório de Síntese e Raios-X — LSRX</div>
+        <div class="header-subtitle">Laboratório de Deposição de Filmes Finos — LDFF</div>
+        <div class="header-institution">Universidade Federal Rural do Semi-Árido — UFERSA</div>
+    </div>
+
+    <div class="parte1-header">
+        <div class="header-title" style="color: #172499; text-align: center;">FORMULÁRIO DO SOLICITANTE</div>       
+        <div class="header-subtitle" style="text-align: center;">Solicitação de Análises e Medidas</div>
+        <div class="header-text">Preencha as informações abaixo para solicitar a realização de análises no Laboratório de Síntese e Raios-X (LSRX) e no Laboratório de Deposição de Filmes Finos (LDFF). A solicitação será avaliada pela equipe do laboratório quanto à viabilidade técnica, às características das amostras e à disponibilidade dos equipamentos.
+        <b>O envio da solicitação não corresponde à confirmação do agendamento.</b> Após a avaliação, o laboratório informará ao solicitante as orientações para entrega das amostras e realização das análises.</div>
+    </div>
+
+    <form id="lsrxForm">
+        
+        <!-- PARTE I — 1. Informações do Solicitante -->
+        <div class="section-title">1. Informações do Solicitante</div>
+
+        <div class="form-group">
+            <label for="nome">Nome Completo *</label>
+            <input type="text" id="nome" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">E-mail de Contato *</label>
+            <input type="email" id="email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="telefone">Telefone / WhatsApp *</label>
+            <input type="tel" id="telefone" required>
+        </div>
+
+        <div class="form-group">
+            <label for="categoria">Categoria do Solicitante *</label>
+            <select id="categoria" name="categoria" required>
+                <option value="" disabled selected>Selecione uma opção</option>
+                <option value="Docente/Pesquisador">Docente/Pesquisador</option>
+                <option value="Técnico">Técnico</option>
+                <option value="Pós-doutorando">Pós-doutorando</option>
+                <option value="Aluno de pós-graduação">Aluno de pós-graduação</option>
+                <option value="Aluno de graduação">Aluno de graduação</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="origem">Origem do Solicitante *</label>
+            <select id="origem" name="origem" required>
+                <option value="" disabled selected>Selecione uma opção</option>
+                <option value="UFERSA">UFERSA</option>
+                <option value="Outra instituição de ensino/pesquisa">Outra instituição de ensino/pesquisa</option>
+                <option value="Empresa">Empresa</option>
+                <option value="Outra instituição/organização">Outra instituição/organização</option>
+            </select>
+        </div>
+       
+        <!-- Campo condicional para detalhamento da origem -->
+        <div id="condicional-origem" class="conditional-box">
+            <div id="bloco-ufersa" style="display:none;">
+                <label>Campus/Unidade *</label>
+                <input type="text" class="origem-input" id="campus-ufersa">
+                <label style="margin-top:10px;">Laboratório/Grupo de Pesquisa *</label>
+                <input type="text" class="origem-input" id="lab-ufersa">
+            </div>
+            <div id="bloco-outra-inst" style="display:none;">
+                <label>Nome da Instituição *</label>
+                <input type="text" class="origem-input" id="nome-outra-inst">
+                <label style="margin-top:10px;">Laboratório/Grupo de Pesquisa (quando aplicável)</label>
+                <input type="text" id="lab-outra-inst">
+            </div>
+            <div id="bloco-empresa" style="display:none;">
+                <label>Nome da Empresa *</label>
+                <input type="text" class="origem-input" id="nome-empresa">
+            </div>
+            <div id="bloco-outra-org" style="display:none;">
+                <label>Nome da Instituição/Organização *</label>
+                <input type="text" class="origem-input" id="nome-outra-org">
+            </div>
+        </div>
+
+        <!-- Campo Orientador -->
+        <div id="bloco-orientador" class="form-group" style="display: none; margin-top: 15px;">
+            <label for="orientador">Orientador/Supervisor responsável *</label>
+            <input type="text" id="orientador">
+            <small id="msg-orientador" style="color: #64748b;">Este campo é obrigatório para alunos.</small>
+        </div>
+
+        <!-- 2. Informações do Trabalho -->
+        <div class="section-title">2. Informações do Trabalho</div>
+
+        <div class="form-group">
+            <label for="finalidade">Finalidade da Análise *</label>
+            <select id="finalidade" name="finalidade" required>
+                <option value="" disabled selected>Selecione uma opção</option>
+                <option value="TCC">TCC</option>
+                <option value="Dissertação">Dissertação</option>
+                <option value="Tese">Tese</option>
+                <option value="Projeto de pesquisa">Projeto de pesquisa</option>
+                <option value="Prestação de serviço">Prestação de serviço</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </div>
+
+        <!-- Campo Título -->
+        <div id="bloco-titulo" class="form-group" style="display: none;">
+            <label for="titulo-trabalho">Título do Trabalho / Projeto *</label>
+            <input type="text" id="titulo-trabalho">
+        </div>
+
+        <!-- Campo Fomento -->
+        <div id="bloco-fomento" class="form-group" style="display: none;">
+            <label for="projeto-fomento">Projeto associado / Agência de fomento (Opcional)</label>
+            <input type="text" id="projeto-fomento">
+        </div>
+
+        <!-- Campo para quando for Outro -->
+        <div id="bloco-outro" class="form-group" style="display: none;">
+            <label for="outra-finalidade">Por favor, especifique a finalidade *</label>
+            <input type="text" id="outra-finalidade">
+        </div>
+
+        <!-- 3. Análise Solicitada -->
+        <div class="section-title">3. Análise Solicitada</div>
+
+        <div class="form-group">
+            <label>Selecione a(s) técnica(s) desejada(s) *</label>
+            <div class="checkbox-group">
+                <label class="checkbox-option">
+                    <input type="checkbox" name="tecnica" value="Difração de Raios X — DRX">
+                    <div><strong>Difração de Raios X — DRX</strong><br><span style="font-size:12px; color:#64748b;">Análise estrutural de materiais cristalinos, identificação de fases e polimorfos.</span></div>
+                </label>
+                <label class="checkbox-option">
+                    <input type="checkbox" name="tecnica" value="FTIR (Nicolet iS50)">
+                    <div><strong>Espectroscopia no Infravermelho — FTIR (Nicolet iS50 — ATR, NIR, ESP)</strong><br><span style="font-size:12px; color:#64748b;">Caracterização de grupos funcionais e ligações químicas.</span></div>
+                </label>
+                <label class="checkbox-option">
+                    <input type="checkbox" name="tecnica" value="TG/DSC (STA Jupiter 449)">
+                    <div><strong>Análise Térmica Simultânea — TG/DSC (STA Jupiter 449)</strong><br><span style="font-size:12px; color:#64748b;">Avaliação de perdas de massa, estabilidade térmica e eventos térmicos.</span></div>
+                </label>
+                <label class="checkbox-option">
+                    <input type="checkbox" name="tecnica" value="SPUTTERING ">
+                    <div><strong>Sputtering</strong><br><span style="font-size:12px; color:#64748b;">Texto descritivo sobre o equipamento.</span></div>
+                </label>
+            </div>
+        </div>
+
+        <!-- 4. Informações das Amostras -->
+        <div class="section-title">4. Informações das Amostras</div>
+
+        <div class="form-group">
+            <label for="num-amostras">Número de Amostras *</label>
+            <input type="number" id="num-amostras" min="1" required>
+        </div>
+
+        <div class="form-group">
+            <label for="identificacao-amostras">Identificação das Amostras pelo Solicitante *</label>
+            <input type="text" id="identificacao-amostras" placeholder="Ex.: Amostra pura, Tratada 400 °C, Tratada 600 °C, AM01, AM02, AM03" required>
+        </div>
+
+        <div class="form-group">
+            <label for="estado-fisico">Estado Físico da Amostra *</label>
+            <select id="estado-fisico" required>
+                <option value="" disabled selected>Selecione uma opção</option>
+                <option value="Pó">Pó</option>
+                <option value="Sólido">Sólido</option>
+                <option value="Filme">Filme</option>
+                <option value="Líquido">Líquido</option>
+                <option value="Gel/Pasta">Gel/Pasta</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="composicao">Identificação / Composição química conhecida ou provável *</label>
+            <input type="text" id="composicao" required>
+        </div>
+
+        <div class="form-group">
+            <label for="descricao-amostra">Descrição da Amostra / Material de Origem</label>
+            <textarea id="descricao-amostra" rows="3" placeholder="Informar preparação, tratamento térmico, procedência, etc."></textarea>
+        </div>
+
+        <!-- 5. Objetivo da Análise -->
+        <div class="section-title">5. Objetivo da Análise</div>
+        <div class="form-group">
+            <label for="objetivo-analise">Qual informação se pretende obter com a análise? *</label>
+            <textarea id="objetivo-analise" rows="7" placeholder="Descreva brevemente o objetivo da medida..."></textarea>
+        </div>
+
+        <!-- 6. Riscos e Segurança -->
+        <div class="section-title">6. Riscos e Segurança</div>
+        <div class="form-group">
+            <label>A amostra apresenta algum risco ou característica especial? *</label>
+            <div class="checkbox-group">
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Nenhum risco conhecido"> Nenhum risco conhecido</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Tóxica"> Tóxica</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Corrosiva"> Corrosiva</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Inflamável"> Inflamável</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Volátil"> Volátil</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Reativa"> Reativa</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Material biológico"> Material biológico</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Radioativa"> Radioativa</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Higroscópica"> Higroscópica</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Nanomaterial / pó fino"> Nanomaterial / pó fino</label>
+                <label class="checkbox-option"><input type="checkbox" name="risco" value="Outro"> Outro</label>
+            </div>
+        </div>
+
+        <div id="bloco-detalhes-risco" class="form-group" style="display: none; margin-top: 15px;">
+            <label for="detalhes-risco">Especifique os detalhes dos riscos ou cuidados necessários *</label>
+            <textarea id="detalhes-risco" rows="3" placeholder="Descreva os cuidados de manuseio, EPIs necessários, etc."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="documento-seguranca">FISPQ/FDS ou documentação de segurança</label>
+            <input type="file" id="documento-seguranca" name="documento-seguranca" accept=".pdf,.doc,.docx,.jpg,.png" style="padding: 9px; background-color: #f8fafc;">
+            <small style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">Formatos aceitos: PDF, Word ou Imagem (opcional).</small>
+        </div>
+
+        <!-- 7. Condições da Análise -->
+        <div class="section-title">7. Condições da Análise</div>
+        <div class="form-group">
+            <label>Como deverão ser definidos os parâmetros da medida? *</label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="tipo_condicao" value="Padrao" required checked> Utilizar o protocolo padrão do laboratório
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="tipo_condicao" value="Especifica"> Necessito de condições específicas de análise
+                </label>
+            </div>
+        </div>
+
+        <div id="texto-padrao-explicacao" class="conditional-box" style="display: block; margin-bottom: 15px; color: #475569; font-size: 0.95rem;">
+            <p>A opção pelo protocolo padrão indica que os parâmetros serão definidos pela equipe do LSRX/LDFF de acordo com a técnica, as características da amostra e o objetivo informado.</p>
+        </div>
+
+        <div id="condicoes-especificas" class="conditional-box" style="display: none;">
+            <div class="form-group">
+                <label for="cond-drx">Parâmetros DRX (Faixa angular 2θ, passo/resolução, etc.)</label>
+                <input type="text" id="cond-drx">
+            </div>
+            <div class="form-group">
+                <label for="cond-ftir">Parâmetros FTIR (Modo, faixa espectral, etc.)</label>
+                <input type="text" id="cond-ftir">
+            </div>
+            <div class="form-group">
+                <label for="cond-tpdsc">Parâmetros TG/DSC (Faixa de temperatura, taxa, atmosfera, etc.)</label>
+                <input type="text" id="cond-tpdsc">
+            </div>
+            <div class="form-group">
+                <label for="cond-sputtering">Parâmetros Sputtering (Informações.)</label>
+                <input type="text" id="cond-sputtering">
+            </div>
+
+        </div>
+
+        <!-- 8. Entrega das Amostras -->
+        <div class="section-title">8. Entrega das Amostras</div>
+        <div class="form-group">
+            <label for="data-sugerida">Data sugerida para entrega *</label>
+            <input type="date" id="data-sugerida" required>
+        </div>
+        <div class="form-group">
+            <label for="observacoes">Observações Adicionais</label>
+            <textarea id="observacoes"></textarea>
+        </div>
+
+        <!-- 9. Declarações Obrigatórias -->
+        <div class="section-title">9. Declaração do Solicitante</div>
+        <div class="declaracao-box">
+            <label class="checkbox-option" style="margin-bottom: 10px;">
+                <input type="checkbox" id="declara-dados" required>
+                <span>Declaro que as informações fornecidas sobre as amostras são corretas e que foram informados os riscos conhecidos associados ao seu manuseio e análise.</span>
+            </label>
+        </div>
+
+        <div class="section-title">10. Agradecimentos em Trabalhos e Publicações</div>
+        <div class="declaracao-box">
+            <label style="text-align: justify; display: block; margin-bottom: 15px;">
+                Os trabalhos acadêmicos e científicos que utilizarem resultados obtidos no Laboratório de Síntese e Raios-X e/ou Laboratório de Deposição de Filmes Finos deverão incluir o reconhecimento ao laboratório nos agradecimentos.
+            </label>
+
+            <label style="text-align: justify; display: block; margin-bottom: 20px;">
+                <b>Português:</b> Os autores agradecem ao Laboratório de Síntese e Raios-X (LSRX) da Universidade Federal Rural do Semi-Árido (UFERSA) pelo suporte técnico e pela disponibilização da infraestrutura utilizada na realização das análises.
+            </label>
+
+             <label style="text-align: justify; display: block; margin-bottom: 20px;">
+                <b>English:</b> The authors acknowledge the Synthesis and X-Ray Laboratory (LSRX) at the Federal Rural University of the Semi-Arid Region (UFERSA) for technical support and access to the infrastructure used to perform the analyses.
+            </label>
+
+             <label style="text-align: justify; display: block; margin-bottom: 20px;">
+                <b>Español:</b> Los autores agradecen al Laboratorio de Síntesis y Rayos X (LSRX) de la Universidad Federal Rural del Semiárido (UFERSA) por el apoyo técnico y por el acceso a la infraestructura utilizada para la realización de los análisis.
+            </label>
+
+
+            <label class="checkbox-option" style="margin-bottom: 10px;">
+                <input type="checkbox" id="declara-agradecimento" required>
+                <span>Declaro estar ciente da necessidade de reconhecer a utilização da infraestrutura do LSRX nos trabalhos acadêmicos e científicos decorrentes das análises realizadas.</span>
+            </label>
+
+
+
+
+        </div>
+
+        <button type="submit" id="btnEnviar">ENVIAR SOLICITAÇÃO DE ANÁLISE</button>
+    </form>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA17WRxKTHh9Qz1ZMewPl_-zLgXbbu2wmw",
+    authDomain: "ftir-ufersa.firebaseapp.com",
+    projectId: "ftir-ufersa",
+    storageBucket: "ftir-ufersa.firebasestorage.app",
+    messagingSenderId: "959362804498",
+    appId: "S1:959362804498:web:e8722033b6acc2d2a421cb"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const form = document.getElementById('lsrxForm');
+
+  
+  // --- 1. CONTROLE DOS CAMPOS CONDICIONAIS ---
+  function atualizarCamposCondicionais() {
+      const categoria = document.getElementById('categoria').value;
+      const origem = document.getElementById('origem').value;
+
+      const containerOrigem = document.getElementById('condicional-origem');
+      const blocoUfersa = document.getElementById('bloco-ufersa');
+      const blocoOutraInst = document.getElementById('bloco-outra-inst');
+      const blocoEmpresa = document.getElementById('bloco-empresa');
+      const blocoOutraOrg = document.getElementById('bloco-outra-org');
+
+      if (!origem) {
+          containerOrigem.style.display = 'none';
+          return;
+      }
+
+      containerOrigem.style.display = 'block';
+
+      [blocoUfersa, blocoOutraInst, blocoEmpresa, blocoOutraOrg].forEach(bloco => {
+          if (bloco) {
+              bloco.style.display = 'none';
+              bloco.querySelectorAll('input').forEach(input => input.removeAttribute('required'));
+          }
+      });
+
+      if (origem === 'UFERSA' && blocoUfersa) {
+          blocoUfersa.style.display = 'block';
+          document.getElementById('campus-ufersa').setAttribute('required', 'true');
+          document.getElementById('lab-ufersa').setAttribute('required', 'true');
+      } 
+      else if (origem === 'Outra instituição de ensino/pesquisa' && blocoOutraInst) {
+          blocoOutraInst.style.display = 'block';
+          document.getElementById('nome-outra-inst').setAttribute('required', 'true');
+      } 
+      else if (origem === 'Empresa' && blocoEmpresa) {
+          blocoEmpresa.style.display = 'block';
+          document.getElementById('nome-empresa').setAttribute('required', 'true');
+      } 
+      else if (origem === 'Outra instituição/organização' && blocoOutraOrg) {
+          blocoOutraOrg.style.display = 'block';
+          document.getElementById('nome-outra-org').setAttribute('required', 'true');
+      }
+
+      const blocoOrientador = document.getElementById('bloco-orientador');
+      const inputOrientador = document.getElementById('orientador');
+
+      if (categoria === 'Aluno de graduação' || categoria === 'Aluno de pós-graduação') {
+          blocoOrientador.style.display = 'block';
+          inputOrientador.setAttribute('required', 'true');
+      } else {
+          blocoOrientador.style.display = 'none';
+          inputOrientador.removeAttribute('required');
+          inputOrientador.value = '';
+      }
+  }
+
+  document.getElementById('categoria').addEventListener('change', atualizarCamposCondicionais);
+  document.getElementById('origem').addEventListener('change', atualizarCamposCondicionais);
+
+  // --- 2. CONTROLE DA FINALIDADE DA ANÁLISE ---
+  document.getElementById('finalidade').addEventListener('change', (e) => {
+      const valor = e.target.value;
+      const blocoTitulo = document.getElementById('bloco-titulo');
+      const blocoFomento = document.getElementById('bloco-fomento');
+      const blocoOutro = document.getElementById('bloco-outro');
+      const inputTitulo = document.getElementById('titulo-trabalho');
+      const inputOutro = document.getElementById('outra-finalidade');
+
+      blocoTitulo.style.display = 'none';
+      blocoFomento.style.display = 'none';
+      blocoOutro.style.display = 'none';
+      inputTitulo.removeAttribute('required');
+      inputOutro.removeAttribute('required');
+
+      if (valor === 'TCC' || valor === 'Dissertação' || valor === 'Tese') {
+          blocoTitulo.style.display = 'block';
+          inputTitulo.setAttribute('required', 'true');
+      } 
+      else if (valor === 'Projeto de pesquisa' || valor === 'Prestação de serviço') {
+          blocoFomento.style.display = 'block';
+      }
+      else if (valor === 'Outro') {
+          blocoOutro.style.display = 'block';
+          inputOutro.setAttribute('required', 'true');
+      }
+  });
+
+  // --- 3. CONTROLE DE CONDIÇÕES DA ANÁLISE ---
+  const radiosTipoCondicao = document.querySelectorAll('input[name="tipo_condicao"]');
+  const textoPadraoExplicacao = document.getElementById('texto-padrao-explicacao');
+  const blocoCondicoesEspecificas = document.getElementById('condicoes-especificas');
+
+  radiosTipoCondicao.forEach(radio => {
+      radio.addEventListener('change', () => {
+          if (radio.value === 'Padrao' && radio.checked) {
+              textoPadraoExplicacao.style.display = 'block';
+              blocoCondicoesEspecificas.style.display = 'none';
+          } else if (radio.value === 'Especifica' && radio.checked) {
+              textoPadraoExplicacao.style.display = 'none';
+              blocoCondicoesEspecificas.style.display = 'block';
+          }
+      });
+  });
+
+  // --- 4. CONTROLE DE RISCOS E SEGURANÇA ---
+  const checkboxesRisco = document.querySelectorAll('input[name="risco"]');
+  const blocoDetalhesRisco = document.getElementById('bloco-detalhes-risco');
+  const inputDetalhesRisco = document.getElementById('detalhes-risco');
+  const checkboxNenhum = document.querySelector('input[name="risco"][value="Nenhum risco conhecido"]');
+
+  checkboxesRisco.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+          if (checkbox === checkboxNenhum && checkboxNenhum.checked) {
+              checkboxesRisco.forEach(cb => {
+                  if (cb !== checkboxNenhum) cb.checked = false;
+              });
+          } else if (checkbox.checked && checkboxNenhum) {
+              checkboxNenhum.checked = false;
+          }
+
+          let algumRiscoMarcado = false;
+          checkboxesRisco.forEach(cb => {
+              if (cb !== checkboxNenhum && cb.checked) {
+                  algumRiscoMarcado = true;
+              }
+          });
+
+          if (algumRiscoMarcado && blocoDetalhesRisco) {
+              blocoDetalhesRisco.style.display = 'block';
+              inputDetalhesRisco.setAttribute('required', 'true');
+          } else if (blocoDetalhesRisco) {
+              blocoDetalhesRisco.style.display = 'none';
+              inputDetalhesRisco.removeAttribute('required');
+              inputDetalhesRisco.value = "";
+          }
+      });
+  });
+
+  // --- 5. FUNÇÃO PARA GERAR O CÓDIGO NO PADRÃO LSRXAAMMNNNN ---
+  async function gerarCodigoLSRX() {
+    const agora = new Date();
+    const anoCompleto = String(agora.getFullYear());
+    const ano = anoCompleto.slice(-2); // Ex: "26"
+    const mes = String(agora.getMonth() + 1).padStart(2, '0'); // Ex: "08"
+    
+    const prefixoDesejado = `LSRX${ano}${mes}`; // Ex: "LSRX2608"
+    let proximoNumero = 1;
+
+    try {
+      const q = query(collection(db, "solicitacoes"));
+      const querySnapshot = await getDocs(q);
+      
+      let contadorMesAno = 0;
+      querySnapshot.forEach((doc) => {
+        const dados = doc.data();
+        if (dados.codigoProtocolo && dados.codigoProtocolo.startsWith(prefixoDesejado)) {
+          contadorMesAno++;
+        }
+      });
+
+      proximoNumero = contadorMesAno + 1;
+    } catch (error) {
+      console.error("Erro ao calcular sequência do protocolo:", error);
+    }
+
+    const numeroFormatado = String(proximoNumero).padStart(4, '0'); // NNNN
+    return `${prefixoDesejado}${numeroFormatado}`;
+  }
+
+  // --- 6. EVENTO DE ENVIO COM VALIDAÇÃO DE LIMITE DO FIREBASE ---
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Validações básicas de campos
+    const tecnicasSelecionadas = [];
+    document.querySelectorAll('input[name="tecnica"]:checked').forEach(el => {
+        tecnicasSelecionadas.push(el.value);
+    });
+
+    if (tecnicasSelecionadas.length === 0) {
+        alert("Por favor, selecione pelo menos uma técnica de análise desejada.");
+        return;
+    }
+
+    const riscosSelecionados = [];
+    document.querySelectorAll('input[name="risco"]:checked').forEach(el => {
+        riscosSelecionados.push(el.value);
+    });
+
+    if (riscosSelecionados.length === 0) {
+        alert("Por favor, selecione pelo menos uma opção em 'Riscos e Segurança'.");
+        return;
+    }
+
+    const declaraDados = document.getElementById('declara-dados');
+    if (!declaraDados.checked) {
+        alert("Por favor, marque a declaração sobre a veracidade dos dados.");
+        declaraDados.focus();
+        return;
+    }
+
+    const declaraAgradecimento = document.getElementById('declara-agradecimento');
+    if (!declaraAgradecimento.checked) {
+        alert("Por favor, confirme a ciência sobre o reconhecimento do laboratório em trabalhos.");
+        declaraAgradecimento.focus();
+        return;
+    }
+
+    const btnEnviar = document.getElementById('btnEnviar');
+    btnEnviar.disabled = true;
+    btnEnviar.innerText = "Verificando disponibilidade...";
+
+    try {
+      // ETAPA DE VERIFICAÇÃO DE LIMITE NO FIREBASE
+      let limiteMaximo = null;
+      try {
+        const configDocRef = doc(db, "configuracoes", "limites");
+        const configSnap = await getDoc(configDocRef);
+        if (configSnap.exists()) {
+          limiteMaximo = configSnap.data().limiteMensal; // O campo cadastrado no painel admin
+        }
+      } catch (err) {
+        console.warn("Aviso: Documento de configuração de limite não encontrado. Prosseguindo sem restrição.", err);
+      }
+
+      // Se houver limite definido, checa quantas solicitações já existem no mês corrente
+      if (limiteMaximo !== null && limiteMaximo !== undefined) {
+        const agora = new Date();
+        const ano = String(agora.getFullYear()).slice(-2);
+        const mes = String(agora.getMonth() + 1).padStart(2, '0');
+        const prefixoAtual = `LSRX${ano}${mes}`;
+
+        const q = query(collection(db, "solicitacoes"));
+        const querySnapshot = await getDocs(q);
+        
+        let totalRegistrosMes = 0;
+        querySnapshot.forEach((docItem) => {
+          const dadosItem = docItem.data();
+          if (dadosItem.codigoProtocolo && dadosItem.codigoProtocolo.startsWith(prefixoAtual)) {
+            totalRegistrosMes++;
+          }
+        });
+
+        // Se atingiu ou passou do limite, bloqueia o envio
+        if (totalRegistrosMes >= Number(limiteMaximo)) {
+          alert("O limite de solicitações para este período foi atingido. Tente novamente mais tarde.");
+          btnEnviar.disabled = false;
+          btnEnviar.innerText = "ENVIAR SOLICITAÇÃO DE ANÁLISE";
+          return;
+        }
+      }
+
+      btnEnviar.innerText = "Enviando para o sistema...";
+      
+      // Gera o código e salva
+      const codigoGerado = await gerarCodigoLSRX();
+
+      const origemSelecionada = document.getElementById('origem').value;
+      const tipoCondicaoEl = document.querySelector('input[name="tipo_condicao"]:checked');
+
+      const dadosSolicitacao = {
+        codigoProtocolo: codigoGerado,
+        dataEnvio: new Date().toISOString(),
+        
+        // --- 1. Informações do Solicitante ---
+        nome: document.getElementById('nome').value || '',
+        email: document.getElementById('email').value || '',
+        telefone: document.getElementById('telefone').value || '',
+        categoria: document.getElementById('categoria').value || '',
+        origem: origemSelecionada || '',
+        
+        // Campos condicionais de Origem
+        campusUfersa: document.getElementById('campus-ufersa') ? document.getElementById('campus-ufersa').value || '' : '',
+        labUfersa: document.getElementById('lab-ufersa') ? document.getElementById('lab-ufersa').value || '' : '',
+        nomeOutraInst: document.getElementById('nome-outra-inst') ? document.getElementById('nome-outra-inst').value || '' : '',
+        labOutraInst: document.getElementById('lab-outra-inst') ? document.getElementById('lab-outra-inst').value || '' : '',
+        nomeEmpresa: document.getElementById('nome-empresa') ? document.getElementById('nome-empresa').value || '' : '',
+        nomeOutraOrg: document.getElementById('nome-outra-org') ? document.getElementById('nome-outra-org').value || '' : '',
+        
+        // Orientador
+        orientador: document.getElementById('orientador').value || 'Não se aplica',
+
+        // --- 2. Informações do Trabalho ---
+        finalidade: document.getElementById('finalidade').value || '',
+        tituloTrabalho: document.getElementById('titulo-trabalho').value || '',
+        projetoFomento: document.getElementById('projeto-fomento').value || '',
+        outraFinalidade: document.getElementById('outra-finalidade').value || '',
+
+        // --- 3. Análise Solicitada ---
+        tecnicas: tecnicasSelecionadas.join(', '),
+
+        // --- 4. Informações das Amostras ---
+        numAmostras: document.getElementById('num-amostras').value || '',
+        identificacaoAmostras: document.getElementById('identificacao-amostras').value || '',
+        estadoFisico: document.getElementById('estado-fisico').value || '',
+        composicao: document.getElementById('composicao').value || '',
+        descricaoAmostra: document.getElementById('descricao-amostra').value || '',
+
+        // --- 5. Objetivo da Análise ---
+        objetivoAnalise: document.getElementById('objetivo-analise').value || '',
+
+        // --- 6. Riscos e Segurança ---
+        riscos: riscosSelecionados.join(', '),
+        detalhesRisco: document.getElementById('detalhes-risco').value || '',
+
+        // --- 7. Condições da Análise ---
+        tipoCondicao: tipoCondicaoEl ? tipoCondicaoEl.value : '',
+        condDrx: document.getElementById('cond-drx').value || '',
+        condFtir: document.getElementById('cond-ftir').value || '',
+        condTpdsc: document.getElementById('cond-tpdsc').value || '',
+        condSputtering: document.getElementById('cond-sputtering').value || '',
+        
+        // --- 8. Entrega das Amostras e Observações ---
+        dataSugerida: document.getElementById('data-sugerida').value || '',
+        observacoes: document.getElementById('observacoes').value || '',
+
+        // --- 9 & 10. Declarações ---
+        declaraDados: document.getElementById('declara-dados').checked,
+        declaraAgradecimento: document.getElementById('declara-agradecimento').checked
+      };
+
+      await addDoc(collection(db, "solicitacoes"), dadosSolicitacao);
+
+
+
+      alert(`Sucesso! Solicitação enviada. Protocolo: ${codigoGerado}`);
+      form.reset();
+      
+    } catch (error) {
+      console.error("Ocorreu um erro ao processar a solicitação:", error);
+      alert("Ocorreu um erro ao enviar a solicitação. Tente novamente.");
+    } finally {
+      btnEnviar.disabled = false;
+      btnEnviar.innerText = "ENVIAR SOLICITAÇÃO DE ANÁLISE";
+    }
+  });
+</script>
+</body>
+</html>
