@@ -307,9 +307,94 @@
                 padding: 2px 4px;
             }
         }
+/* Estilos para a Tela de Proteção por Senha */
+        #auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .auth-box {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .auth-box h3 {
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 22px;
+        }
+
+        .auth-box p {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .auth-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            margin-bottom: 12px;
+        }
+
+        .auth-box input:focus {
+            border-color: #0284c7;
+        }
+
+        .auth-box button {
+            width: 100%;
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .auth-box button:hover {
+            background-color: #0369a1;
+        }
+
+        .auth-error {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+
     </style>
 </head>
 <body>
+
+    <!-- Tela de Autenticação -->
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <h3>Painel Restrito</h3>
+            <p>LSRX / LDFF — UFERSA</p>
+            <input type="password" id="inputSenhaAcesso" placeholder="Digite a senha de acesso">
+            <button id="btnEntrarAdmin">Entrar no Painel</button>
+            <div id="authErrorMsg" class="auth-error">Senha incorreta. Tente novamente.</div>
+        </div>
+    </div>
 
 <div class="admin-container">
     
@@ -411,6 +496,40 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // --- CONTROLE DE SENHA ---
+    const SENHA_ADMIN = "cited.ufersa"; // Altere para a senha desejada
+
+    const authOverlay = document.getElementById('auth-overlay');
+    const adminContainer = document.querySelector('.admin-container');
+    const inputSenhaAcesso = document.getElementById('inputSenhaAcesso');
+    const btnEntrarAdmin = document.getElementById('btnEntrarAdmin');
+    const authErrorMsg = document.getElementById('authErrorMsg');
+
+    // Oculta o painel principal inicialmente
+    adminContainer.style.display = 'none';
+
+    function liberarPainel() {
+        authOverlay.style.display = 'none';
+        adminContainer.style.display = 'block';
+        carregarSolicitacoes(); // Chama o carregamento original dos dados
+    }
+
+    btnEntrarAdmin.addEventListener('click', () => {
+        if (inputSenhaAcesso.value === SENHA_ADMIN) {
+            liberarPainel();
+        } else {
+            authErrorMsg.style.display = 'block';
+            inputSenhaAcesso.value = '';
+            inputSenhaAcesso.focus();
+        }
+    });
+
+    inputSenhaAcesso.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            btnEntrarAdmin.click();
+        }
+    });
 
     const corpoTabela = document.getElementById('corpoTabela');
     const loading = document.getElementById('loading');
