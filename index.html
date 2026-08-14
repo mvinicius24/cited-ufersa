@@ -317,10 +317,17 @@
         <div class="form-group">
             <label>Selecione a(s) técnica(s) desejada(s) *</label>
             <div class="checkbox-group">
-                <label class="checkbox-option">
+                <!-- ATIVAR QUANDO ESTIVER FUNCIONANDO-->
+                <!--<label class="checkbox-option">
                     <input type="checkbox" name="tecnica" value="Difração de Raios X — DRX">
                     <div><strong>Difração de Raios X — DRX</strong><br><span style="font-size:12px; color:#64748b;">Análise estrutural de materiais cristalinos, identificação de fases e polimorfos.</span></div>
-                </label>
+                </label>-->
+             <!-- DESATIVAR QUANDO ESTIVER FUNCIONANDO-->
+            <label class="checkbox-option" style="opacity: 0.6; cursor: not-allowed;">
+                    <input type="checkbox" name="tecnica" value="Difração de Raios X — DRX" disabled>
+                    <div><strong style="color: #94a3b8;">Difração de Raios X — DRX (Inoperante no momento)</strong><br><span style="font-size:12px; color:#94a3b8;">Análise estrutural de materiais cristalinos, identificação de fases e polimorfos.</span></div>
+                </label>  
+
                 <label class="checkbox-option">
                     <input type="checkbox" name="tecnica" value="FTIR (Nicolet iS50)">
                     <div><strong>Espectroscopia no Infravermelho — FTIR (Nicolet iS50 — ATR, NIR, ESP)</strong><br><span style="font-size:12px; color:#64748b;">Caracterização de grupos funcionais e ligações químicas.</span></div>
@@ -335,6 +342,15 @@
                 </label>
             </div>
         </div>
+
+
+
+
+
+
+
+
+
 
         <!-- 4. Informações das Amostras -->
         <div class="section-title">4. Informações das Amostras</div>
@@ -843,7 +859,15 @@
 
 
 
-      alert(`Sucesso! Solicitação enviada. Protocolo: ${codigoGerado}`);
+      // Mensagem detalhada solicitada
+      const mensagemSucesso = 
+          `Solicitação recebida com sucesso.\n` +
+          `Protocolo: ${codigoGerado}\n\n` +
+          `Uma cópia em PDF da solicitação será enviada para o e-mail informado.\n\n` +
+          `A solicitação será avaliada pela equipe do Laboratório de Síntese e Raios-X quanto à viabilidade técnica, às características das amostras e à disponibilidade do equipamento. O agendamento e as orientações para entrega das amostras serão informados posteriormente.`;
+
+      alert(mensagemSucesso);
+
       form.reset();
       
     } catch (error) {
