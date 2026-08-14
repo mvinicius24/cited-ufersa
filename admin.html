@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - LSRX / LDFF UFERSA</title>
+    <!-- Biblioteca para gerar PDF no painel admin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            padding: 20px 10px;
+        }
+
+        .admin-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h2 {
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        .actions-menu {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-refresh { background-color: #0284c7; }
+        .btn-refresh:hover { background-color: #0369a1; }
+        
+        .btn-print { background-color: #10b981; }
+        .btn-print:hover { background-color: #059669; }
+
+        .btn-csv { background-color: #f59e0b; }
+        .btn-csv:hover { background-color: #d97706; }
+
+        .btn-config { background-color: #6366f1; }
+        .btn-config:hover { background-color: #4f46e5; }
+
+        /* Painel de Configuração de Limite */
+        .config-panel {
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .config-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .config-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .config-group input {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100px;
+            outline: none;
+        }
+
+        /* Barra de Filtros */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            background-color: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .filter-group input, .filter-group select {
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            background-color: #ffffff;
+        }
+
+        .filter-group input:focus, .filter-group select:focus {
+            border-color: #0284c7;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            min-width: 1100px;
+            border-collapse: collapse;
+            text-align: left;
+            margin-top: 5px;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #cbd5e1;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .tag-risco {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+            display: inline-block;
+        }
+
+        .tag-risco.sim { background-color: #fee2e2; color: #991b1b; }
+        .tag-risco.nao { background-color: #dcfce7; color: #166534; }
+
+        .tag-status {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .tag-status.pendente { background-color: #fef3c7; color: #d97706; }
+        .tag-status.concluido { background-color: #dcfce7; color: #166534; }
+
+        .acoes-grupo {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .btn-concluir {
+            background-color: #10b981;
+            color: white;
+        }
+        .btn-concluir:hover { background-color: #059669; }
+
+        .btn-delete {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-delete:hover { background-color: #dc2626; }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-weight: bold;
+        }
+
+        #relatorioCabecalhoOficial {
+            display: none;
+        }
+
+        @media print {
+            body {
+                background-color: #ffffff;
+                padding: 0;
+            }
+
+            .admin-container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+
+            header, .filter-bar, .config-panel, .acoes-grupo, th:last-child, td:last-child {
+                display: none !important;
+            }
+
+            #relatorioCabecalhoOficial {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 2px solid #000000;
+                padding-bottom: 15px;
+                margin-bottom: 30px;
+            }
+
+            #printLogo {
+                max-height: 80px;
+                max-width: 200px;
+                object-fit: contain;
+            }
+
+            #printTexto {
+                text-align: right;
+                font-size: 14px;
+                color: #000000;
+                line-height: 1.4;
+                font-weight: bold;
+            }
+
+            table {
+                min-width: 100% !important;
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            th {
+                background-color: #e2e8f0 !important;
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            td, th {
+                border-bottom: 1px solid #000000 !important;
+                padding: 6px 4px;
+                font-size: 10px;
+            }
+
+            .tag-risco, .tag-status {
+                border: 1px solid #000000;
+                padding: 2px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    
+    <div id="relatorioCabecalhoOficial">
+        <img id="printLogo" src="https://grcmlesydpcd.objectstorage.sa-saopaulo-1.oci.customer-oci.com/p/OQwcvnO-c63O08Gc2Kv4OTbJttj5ik60dguiDIyyQ0wuo5SWn-jHOLW9wNbylNqI/n/grcmlesydpcd/b/dtysppobjmntbkp01/o/media/doity/eventos/evento-56488-logo_organizador.png" alt="Logo UFERSA">
+        
+        <div id="printTexto">
+            UNIVERSIDADE FEDERAL RURAL DO SEMI-ÁRIDO - UFERSA<br>
+            CENTRO DE CIÊNCIAS EXATAS E NATURAIS - CCEN<br>
+            LABORATÓRIO DE SÍNTESE E RAIOS-X — LSRX<br>
+            LABORATÓRIO DE DEPOSIÇÃO DE FILMES FINOS — LDFF<br>
+            RELATÓRIO DE SOLICITAÇÕES DE ANÁLISES E MEDIDAS
+        </div>
+    </div>
+
+    <header>
+        <div>
+            <h2>Painel Admin - LSRX / LDFF</h2>
+            <p style="color: #64748b; font-size: 13px;">Gerenciamento de solicitações de análises - UFERSA</p>
+        </div>
+        <div class="actions-menu">
+            <button class="btn btn-csv" id="btnExportarCsv">📊 CSV</button>
+            <button class="btn btn-refresh" id="btnRecarregar">🔄 Atualizar</button>
+            <button class="btn btn-print" id="btnImprimir">🖨️ Imprimir</button>
+        </div>
+    </header>
+
+    <!-- Painel de Controle de Limite Mensal -->
+    <div class="config-panel">
+        <div class="config-group">
+            <label for="inputLimiteMensal">⚙️ Limite Máximo de Envios no Mês:</label>
+            <input type="number" id="inputLimiteMensal" min="1" placeholder="Ex: 50">
+            <button class="btn btn-config" id="btnSalvarLimite">Salvar Limite</button>
+        </div>
+        <div id="statusContadorMes" style="font-size: 13px; font-weight: 600; color: #475569;">
+            Envios no mês atual: Carregando...
+        </div>
+    </div>
+
+    <!-- Barra de Filtros -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label for="filtroBusca">Pesquisar (Nome / E-mail / Protocolo)</label>
+            <input type="text" id="filtroBusca" placeholder="Digite para buscar...">
+        </div>
+        <div class="filter-group">
+            <label for="filtroEquipamento">Filtrar por Técnica / Equipamento</label>
+            <select id="filtroEquipamento">
+                <option value="">Todas as técnicas</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="filtroStatus">Filtrar por Status</label>
+            <select id="filtroStatus">
+                <option value="">Todos os status</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Concluído">Concluído</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <div id="loading" class="loading">Carregando solicitações...</div>
+        <table id="tabelaAgendamentos" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Código Protocolo</th>
+                    <th>Data Sol.</th>
+                    <th>Solicitante / Categoria</th>
+                    <th>Finalidade / Trabalho</th>
+                    <th>Técnicas</th>
+                    <th>Contato</th>
+                    <th>Amostras</th>
+                    <th>Riscos</th>
+                    <th>Status</th>
+                    <th>Entrega Sugerida</th>
+                    <th>Observações</th>
+                    <th class="col-acao">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc, updateDoc, setDoc, getDoc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA17WRxKTHh9Qz1ZMewPl_-zLgXbbu2wmw",
+        authDomain: "ftir-ufersa.firebaseapp.com",
+        projectId: "ftir-ufersa",
+        storageBucket: "ftir-ufersa.firebasestorage.app",
+        messagingSenderId: "959362804498",
+        appId: "S1:959362804498:web:e8722033b6acc2d2a421cb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const corpoTabela = document.getElementById('corpoTabela');
+    const loading = document.getElementById('loading');
+    const tabela = document.getElementById('tabelaAgendamentos');
+    
+    const filtroBusca = document.getElementById('filtroBusca');
+    const filtroEquipamento = document.getElementById('filtroEquipamento');
+    const filtroStatus = document.getElementById('filtroStatus');
+    
+    const inputLimiteMensal = document.getElementById('inputLimiteMensal');
+    const btnSalvarLimite = document.getElementById('btnSalvarLimite');
+    const statusContadorMes = document.getElementById('statusContadorMes');
+
+    let listaDadosCache = [];
+
+    async function carregarConfiguracoesELimites() {
+        try {
+            const configDocRef = doc(db, "configuracoes", "limites");
+            const configSnap = await getDoc(configDocRef);
+            if (configSnap.exists()) {
+                const dadosConfig = configSnap.data();
+                if (dadosConfig.limiteMensal !== undefined) {
+                    inputLimiteMensal.value = dadosConfig.limiteMensal;
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao carregar configurações de limite:", error);
+        }
+    }
+
+    async function carregarSolicitacoes() {
+        loading.style.display = 'block';
+        tabela.style.display = 'none';
+        corpoTabela.innerHTML = '';
+        listaDadosCache = [];
+
+        await carregarConfiguracoesELimites();
+
+        try {
+            const q = query(collection(db, "solicitacoes"));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                loading.innerText = "Nenhuma solicitação encontrada.";
+                statusContadorMes.innerText = "Envios no mês atual: 0";
+                return;
+            }
+
+            const tecnicasSet = new Set();
+            let totalMesAtual = 0;
+
+            const agora = new Date();
+            const anoAtual = String(agora.getFullYear()).slice(-2);
+            const mesAtual = String(agora.getMonth() + 1).padStart(2, '0');
+            const prefixoMesAtual = `LSRX${anoAtual}${mesAtual}`;
+
+            querySnapshot.forEach((documento) => {
+                const dados = documento.data();
+                const id = documento.id;
+                
+                listaDadosCache.push({ id, ...dados });
+
+                const protocolo = dados.codigoProtocolo || dados.codigo || '';
+                if (protocolo.startsWith(prefixoMesAtual)) {
+                    totalMesAtual++;
+                }
+
+                const tecnicasCampo = dados.tecnicas || dados.equipamento || dados.tecnicaSelecionada;
+                if (tecnicasCampo) {
+                    if (typeof tecnicasCampo === 'string') {
+                        tecnicasCampo.split(',').forEach(t => tecnicasSet.add(t.trim()));
+                    } else if (Array.isArray(tecnicasCampo)) {
+                        tecnicasCampo.forEach(t => tecnicasSet.add(t.trim()));
+                    }
+                }
+            });
+
+            listaDadosCache.sort((a, b) => {
+                const protoA = a.codigoProtocolo || a.codigo || '';
+                const protoB = b.codigoProtocolo || b.codigo || '';
+                return protoA.localeCompare(protoB, 'pt-BR', { numeric: true });
+            });
+
+            let limiteAtualStr = inputLimiteMensal.value ? ` / Limite: ${inputLimiteMensal.value}` : '';
+            statusContadorMes.innerText = `Envios no mês atual (${mesAtual}/${agora.getFullYear()}): ${totalMesAtual}${limiteAtualStr}`;
+
+            atualizarSelectTecnicas(tecnicasSet);
+            renderizarTabela(listaDadosCache);
+
+            loading.style.display = 'none';
+            tabela.style.display = 'table';
+
+        } catch (error) {
+            console.error("Erro ao carregar dados:", error);
+            loading.innerText = "Erro ao carregar as solicitações.";
+        }
+    }
+
+    function atualizarSelectTecnicas(tecnicasSet) {
+        const valorAtual = filtroEquipamento.value;
+        filtroEquipamento.innerHTML = '<option value="">Todas as técnicas</option>';
+        tecnicasSet.forEach(eq => {
+            if (eq) {
+                const option = document.createElement('option');
+                option.value = eq;
+                option.textContent = eq;
+                filtroEquipamento.appendChild(option);
+            }
+        });
+        filtroEquipamento.value = valorAtual;
+    }
+
+    function renderizarTabela(dadosArray) {
+        corpoTabela.innerHTML = '';
+
+        const termoBusca = filtroBusca.value.toLowerCase();
+        const eqFiltro = filtroEquipamento.value;
+        const statusFiltro = filtroStatus.value;
+
+        const dadosFiltrados = dadosArray.filter(item => {
+            const codigo = (item.codigoProtocolo || item.codigo || '').toLowerCase();
+            const nome = (item.nome || item.solicitante || '').toLowerCase();
+            const email = (item.email || '').toLowerCase();
+            const orientador = (item.orientador || item.professorOrientador || '').toLowerCase();
+            const finalidade = (item.finalidade || item.tituloTrabalho || '').toLowerCase();
+            const tecnicasStr = String(item.tecnicas || item.equipamento || item.tecnicaSelecionada || '').toLowerCase();
+            const status = item.status || 'Pendente';
+
+            const matchTexto = !termoBusca || codigo.includes(termoBusca) || nome.includes(termoBusca) || email.includes(termoBusca) || orientador.includes(termoBusca) || finalidade.includes(termoBusca);
+            const matchEq = !eqFiltro || tecnicasStr.includes(eqFiltro.toLowerCase());
+            const matchStatus = !statusFiltro || status === statusFiltro;
+
+            return matchTexto && matchEq && matchStatus;
+        });
+
+        if (dadosFiltrados.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 20px;">Nenhum registro encontrado com esses filtros.</td></tr>`;
+            return;
+        }
+
+        dadosFiltrados.forEach((dados) => {
+            const id = dados.id;
+            const codigoProtocolo = dados.codigoProtocolo || dados.codigo || 'N/A';
+            
+            let dataEnvioFormatada = 'N/A';
+            const dataBruta = dados.dataEnvio || dados.data || dados.criadoEm;
+            if (dataBruta) {
+                dataEnvioFormatada = new Date(dataBruta).toLocaleDateString('pt-BR');
+            }
+
+            const nomeSolicitante = dados.nome || dados.solicitante || 'N/A';
+            const categoriaSolicitante = dados.categoria || dados.tipoUsuario || 'N/A';
+            const origemSolicitante = dados.origem || dados.instituicao || 'N/A';
+
+            const finalidadeTrabalho = dados.finalidade || dados.tituloTrabalho || dados.projeto || 'N/A';
+            const nomeOrientador = dados.orientador || dados.professorOrientador || 'Não se aplica';
+
+            const tecnicasFormatadas = dados.tecnicas || dados.equipamento || dados.tecnicaSelecionada || 'N/A';
+            const contatoEmail = dados.email || 'N/A';
+            const contatoTelefone = dados.telefone || dados.celular || 'N/A';
+
+            const idAmostras = dados.identificacaoAmostras || dados.amostrasDescricao || dados.descricaoAmostras || 'N/A';
+            const qtdAmostras = dados.numAmostras || dados.quantidadeAmostras || dados.qtdAmostras || '?';
+            const estadoFisicoAmostra = dados.estadoFisico || dados.naturezaAmostra || '';
+
+            const riscosFormatados = dados.riscos || dados.grauRisco || 'Nenhum risco conhecido';
+            const statusAtual = dados.status || 'Pendente';
+            
+            let dataSugeridaFormatada = 'N/A';
+            const dataSugBruta = dados.dataSugerida || dados.previsaoEntrega;
+            if (dataSugBruta) {
+                dataSugeridaFormatada = dataSugBruta.includes('-') ? dataSugBruta.split('-').reverse().join('/') : dataSugBruta;
+            }
+
+            const obsTexto = dados.observacoes || dados.obs || '-';
+
+            const botaoConcluirHtml = statusAtual === 'Concluído' 
+                ? '' 
+                : `<button class="btn-action btn-concluir" data-id="${id}" title="Marcar como concluído">✅</button>`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${codigoProtocolo}</strong></td>
+                <td>${dataEnvioFormatada}</td>
+                <td>
+                    <strong>${nomeSolicitante}</strong><br>
+                    <small style="color:#0284c7; font-weight:bold;">${categoriaSolicitante} (${origemSolicitante})</small>
+                </td>
+                <td>
+                    <strong>${finalidadeTrabalho}</strong><br>
+                    <small style="color:#64748b">Orientador: ${nomeOrientador}</small>
+                </td>
+                <td><strong style="color: #0369a1;">${tecnicasFormatadas}</strong></td>
+                <td>${contatoEmail}<br><small>${contatoTelefone}</small></td>
+                <td>
+                    ${idAmostras}<br>
+                    <small style="color:#0284c7">${estadoFisicoAmostra} (${qtdAmostras} amostr.)</small>
+                </td>
+                <td><span class="tag-risco ${riscosFormatados.toLowerCase().includes('nenhum') ? 'nao' : 'sim'}">${riscosFormatados}</span></td>
+                <td><span class="tag-status ${statusAtual === 'Concluído' ? 'concluido' : 'pendente'}">${statusAtual}</span></td>
+                <td>${dataSugeridaFormatada}</td>
+                <td>${obsTexto}</td>
+                <td>
+                    <div class="acoes-grupo">
+                        ${botaoConcluirHtml}
+                        <button class="btn-action btn-pdf" data-id="${id}" title="Gerar e Baixar PDF">📄</button>
+                        <button class="btn-action btn-delete" data-id="${id}" title="Excluir permanentemente">🗑️</button>
+                    </div>
+                </td>
+            `;
+            corpoTabela.appendChild(tr);
+        });
+
+        atribuirEventosBotoes();
+    }
+
+    function gerarPdfAdmin(id) {
+        const dados = listaDadosCache.find(item => item.id === id);
+        if (!dados) {
+            alert("Dados não encontrados.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const docPdf = new jsPDF();
+        
+        let yPos = 40;
+        const leftMargin = 15;
+        const contentWidth = 180;
+
+        // --- CABEÇALHO GLOBAL ---
+        docPdf.setFont("helvetica", "bold");
+        docPdf.setFontSize(10);
+        docPdf.text("UNIVERSIDADE FEDERAL RURAL DO SEMI-ÁRIDO - UFERSA", 105, 12, { align: "center" });
+        docPdf.setFontSize(8);
+        docPdf.text("CENTRO DE CIÊNCIAS EXATAS E NATURAIS - CCEN", 105, 16, { align: "center" });
+        docPdf.text("LABORATÓRIO DE SÍNTESE E RAIOS-X (LSRX)", 105, 20, { align: "center" });
+        docPdf.text("LABORATÓRIO DE DEPOSIÇÃO DE FILMES FINOS (LDFF)", 105, 24, { align: "center" });
+
+        docPdf.setFontSize(10);
+        docPdf.text("FORMULÁRIO DE SOLICITAÇÃO DE ANÁLISES E MEDIDAS", 105, 29, { align: "center" });
+
+        const protocolo = dados.codigoProtocolo || dados.codigo || 'N/A';
+        const dataEnvioFormatada = dados.dataEnvio || dados.data || dados.criadoEm 
+            ? new Date(dados.dataEnvio || dados.data || dados.criadoEm).toLocaleString('pt-BR') 
+            : 'N/A';
+        
+        docPdf.setFontSize(8);
+        docPdf.setFont("helvetica", "bold");
+        docPdf.text(`Protocolo: ${protocolo}`, leftMargin, 35);
+        docPdf.text(`Data de Envio: ${dataEnvioFormatada}`, 135, 35);
+        docPdf.setLineWidth(0.3);
+        docPdf.line(leftMargin, 36, 195, 36);
+
+        function checarQuebraPagina(alturaEstimada) {
+            if (yPos + alturaEstimada > 280) {
+                docPdf.addPage();
+                yPos = 20;
+            }
+        }
+
+        function adicionarSecao(titulo) {
+            checarQuebraPagina(12);
+            docPdf.setFontSize(9);
+            docPdf.setFont("helvetica", "bold");
+            docPdf.setTextColor(30, 58, 138); 
+            docPdf.text(titulo, leftMargin, yPos);
+            docPdf.setTextColor(0, 0, 0);
+            yPos += 5;
+        }
+
+        function adicionarLinha(rotulo, valor) {
+            docPdf.setFontSize(8);
+            docPdf.setFont("helvetica", "bold");
+            const textoCompleto = `${rotulo}: ${valor || 'N/A'}`;
+            const linhas = docPdf.splitTextToSize(textoCompleto, contentWidth);
+            checarQuebraPagina((linhas.length * 3.5) + 2);
+            
+            docPdf.setFont("helvetica", "normal");
+            docPdf.text(linhas, leftMargin, yPos);
+            yPos += (linhas.length * 3.5) + 1.5;
+        }
+
+        // ================= SEÇÃO 1: INFORMAÇÕES DO SOLICITANTE =================
+        adicionarSecao("1. Informações do Solicitante");
+        adicionarLinha("Nome", dados.nome || dados.solicitante);
+        adicionarLinha("E-mail", dados.email);
+        adicionarLinha("Telefone", dados.telefone || dados.celular);
+        adicionarLinha("Categoria", dados.categoria || dados.tipoUsuario);
+        adicionarLinha("Orientador(a)", dados.orientador || dados.professorOrientador || 'Não se aplica');
+        adicionarLinha("Origem", dados.origem);
+        
+        if (dados.origem === 'UFERSA') {
+            adicionarLinha("Campus UFERSA", dados.campusUfersa);
+            adicionarLinha("Laboratório UFERSA", dados.labUfersa);
+        } else if (dados.origem === 'Outra instituição de ensino/pesquisa') {
+            adicionarLinha("Nome da Instituição", dados.nomeOutraInst);
+            adicionarLinha("Laboratório", dados.labOutraInst);
+        } else if (dados.origem === 'Empresa') {
+            adicionarLinha("Nome da Empresa", dados.nomeEmpresa);
+        } else if (dados.origem === 'Outra instituição/organização') {
+            adicionarLinha("Nome da Organização", dados.nomeOutraOrg);
+        }
+        yPos += 2;
+
+        // ================= SEÇÃO 2: INFORMAÇÕES DO TRABALHO =================
+        adicionarSecao("2. Informações do Trabalho");
+        adicionarLinha("Finalidade", dados.finalidade);
+        if (['TCC', 'Dissertação', 'Tese'].includes(dados.finalidade)) {
+            adicionarLinha("Título do Trabalho", dados.tituloTrabalho);
+        } else if (['Projeto de pesquisa', 'Prestação de serviço'].includes(dados.finalidade)) {
+            adicionarLinha("Projeto de Fomento", dados.projetoFomento);
+        } else if (dados.finalidade === 'Outro') {
+            adicionarLinha("Outra Finalidade", dados.outraFinalidade);
+        }
+        yPos += 2;
+
+        // ================= SEÇÃO 3: TÉCNICA SOLICITADA =================
+        adicionarSecao("3. Técnica Solicitada");
+        adicionarLinha("Técnicas Solicitadas", dados.tecnicas || dados.equipamento);
+        yPos += 2;
+
+        // ================= SEÇÃO 4: INFORMAÇÕES DAS AMOSTRAS =================
+        adicionarSecao("4. Informações das Amostras");
+        adicionarLinha("Qtd. Amostras", dados.numAmostras || dados.quantidadeAmostras);
+        adicionarLinha("Estado Físico", dados.estadoFisico);
+        adicionarLinha("Identificação", dados.identificacaoAmostras || dados.amostrasDescricao);
+        adicionarLinha("Composição Química", dados.composicao);
+        adicionarLinha("Descrição Detalhada", dados.descricaoAmostra);
+        yPos += 2;
+
+        // ================= SEÇÃO 5: OBJETIVOS DA ANÁLISE =================
+        adicionarSecao("5. Objetivos da Análise");
+        adicionarLinha("Objetivo da Análise", dados.objetivoAnalise);
+        yPos += 2;
+
+        // ================= SEÇÃO 6: RISCOS =================
+        adicionarSecao("6. Riscos");
+        adicionarLinha("Riscos Declarados", dados.riscos || 'Nenhum risco conhecido');
+        adicionarLinha("Detalhes dos Riscos", dados.detalhesRisco);
+        yPos += 2;
+
+        // ================= SEÇÃO 7: CONDIÇÕES DE ANÁLISE =================
+        adicionarSecao("7. Condições de Análise");
+        adicionarLinha("Tipo de Condição", dados.tipoCondicao);
+        if (dados.tipoCondicao === 'Especifica') {
+            adicionarLinha("Condições DRX", dados.condDrx);
+            adicionarLinha("Condições FTIR", dados.condFtir);
+            adicionarLinha("Condições TG/DSC", dados.condTpdsc);
+            adicionarLinha("Condições SPUTTERING", dados.condSputtering);
+        }
+        yPos += 2;
+
+        // ================= SEÇÃO 8: DATA DE ENTREGA DAS AMOSTRAS E OBSERVAÇÕES =================
+        adicionarSecao("8. Data de Entrega das Amostras e Observações");
+        let dataSugerida = dados.dataSugerida || dados.previsaoEntrega || 'N/A';
+        if (dataSugerida.includes('-')) dataSugerida = dataSugerida.split('-').reverse().join('/');
+        adicionarLinha("Data Sugerida Entrega", dataSugerida);
+        adicionarLinha("Observações", dados.observacoes);
+        yPos += 2;
+
+        // ================= SEÇÃO 9: DECLARAÇÃO DE AMOSTRAS E RISCOS =================
+        adicionarSecao("9. Declaração de Amostras e Riscos");
+        const checkDados = dados.declaraDados ? "[X]" : "[ ]";
+        adicionarLinha("Termo", `${checkDados} Declaro que as informações fornecidas sobre as amostras são corretas e que foram informados os riscos conhecidos associados ao seu manuseio e análise.`);
+        yPos += 2;
+
+        // ================= SEÇÃO 10: COMPROMISSO DE MENÇÃO E AGRADECIMENTO =================
+        adicionarSecao("10. Compromisso de Menção e Agradecimento");
+        const checkAgradecimento = dados.declaraAgradecimento ? "[X]" : "[ ]";
+        adicionarLinha("Termo", `${checkAgradecimento} Declaro estar ciente da necessidade de reconhecer a utilização da infraestrutura do LSRX nos trabalhos acadêmicos e científicos decorrentes das análises realizadas.`);
+
+        // --- SALVAR O ARQUIVO ---
+        docPdf.save(`${protocolo}.pdf`);
+
+        // Abre a janela do Gmail pré-preenchida para enviar ao aluno
+        const destinatario = dados.email || '';
+        const nomeSolicitante = dados.nome || dados.solicitante || 'Pesquisador';
+        const assunto = encodeURIComponent(`Comprovante de Solicitação de Análise - Protocolo: ${protocolo}`);
+        const corpoMensagem = encodeURIComponent(
+            `Olá, ${nomeSolicitante}!\n\n` +
+            `Segue em anexo o formulário completo em PDF referente à sua solicitação de análise (Protocolo: ${protocolo}) no laboratório.\n\n` +
+            `Atenciosamente,\nEquipe LSRX/LDFF.`
+        );
+        const urlGmail = `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${destinatario}&su=${assunto}&body=${corpoMensagem}`;
+        window.open(urlGmail, '_blank');
+    }
+
+    function atribuirEventosBotoes() {
+        document.querySelectorAll('.btn-concluir').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const idDoc = e.currentTarget.getAttribute('data-id');
+                if (confirm("Deseja marcar este agendamento como Concluído?")) {
+                    try {
+                        const docRef = doc(db, "solicitacoes", idDoc);
+                        await updateDoc(docRef, { status: "Concluído" });
+                        carregarSolicitacoes();
+                    } catch (error) {
+                        console.error("Erro ao atualizar status:", error);
+                        alert("Erro ao realizar a operação.");
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-delete').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const idDoc = e.currentTarget.getAttribute('data-id');
+                if (confirm("Tem certeza que deseja EXCLUIR permanentemente este registro?")) {
+                    try {
+                        await deleteDoc(doc(db, "solicitacoes", idDoc));
+                        carregarSolicitacoes();
+                    } catch (error) {
+                        console.error("Erro ao excluir:", error);
+                        alert("Erro ao excluir o registro.");
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-pdf').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                gerarPdfAdmin(id);
+            });
+        });
+    }
+
+    btnSalvarLimite.addEventListener('click', async () => {
+        const novoLimite = parseInt(inputLimiteMensal.value);
+        if (isNaN(novoLimite) || novoLimite <= 0) {
+            alert("Insira um número válido para o limite mensal.");
+            return;
+        }
+
+        try {
+            const configDocRef = doc(db, "configuracoes", "limites");
+            await setDoc(configDocRef, { limiteMensal: novoLimite }, { merge: true });
+            alert("Limite mensal atualizado com sucesso!");
+            carregarSolicitacoes();
+        } catch (error) {
+            console.error("Erro ao salvar limite:", error);
+            alert("Erro ao salvar o limite no Firebase.");
+        }
+    });
+
+    filtroBusca.addEventListener('input', () => renderizarTabela(listaDadosCache));
+    filtroEquipamento.addEventListener('change', () => renderizarTabela(listaDadosCache));
+    filtroStatus.addEventListener('change', () => renderizarTabela(listaDadosCache));
+
+    document.getElementById('btnExportarCsv').addEventListener('click', () => {
+        if (listaDadosCache.length === 0) {
+            alert("Não há dados para exportar.");
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,sep=;\r\n";
+        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes\r\n";
+
+        listaDadosCache.forEach(item => {
+            const codigo = item.codigoProtocolo || item.codigo || '';
+            const dataEnvio = item.dataEnvio ? new Date(item.dataEnvio).toLocaleDateString('pt-BR') : '';
+            const nome = `"${(item.nome || item.solicitante || '').replace(/"/g, '""')}"`;
+            const categoria = `"${(item.categoria || '').replace(/"/g, '""')}"`;
+            const origem = `"${(item.origem || '').replace(/"/g, '""')}"`;
+            const finalidade = `"${(item.finalidade || item.tituloTrabalho || '').replace(/"/g, '""')}"`;
+            const orientador = `"${(item.orientador || item.professorOrientador || '').replace(/"/g, '""')}"`;
+            const tecnicas = `"${(item.tecnicas || item.equipamento || '').replace(/"/g, '""')}"`;
+            const email = item.email || '';
+            const telefone = item.telefone || '';
+            const numAmostras = item.numAmostras || item.quantidadeAmostras || '';
+            const estadoFisico = item.estadoFisico || '';
+            const riscos = `"${(item.riscos || '').replace(/"/g, '""')}"`;
+            const status = item.status || 'Pendente';
+            const dataSugerida = item.dataSugerida || '';
+            const observacoes = `"${(item.observacoes || '').replace(/"/g, '""')}"`;
+
+            const linha = [codigo, dataEnvio, nome, categoria, origem, finalidade, orientador, tecnicas, email, telefone, numAmostras, estadoFisico, riscos, status, dataSugerida, observacoes].join(";");
+            csvContent += linha + "\r\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `solicitacoes_lsrx_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    document.getElementById('btnImprimir').addEventListener('click', () => {
+        window.print();
+    });
+
+    document.getElementById('btnRecarregar').addEventListener('click', carregarSolicitacoes);
+    carregarSolicitacoes();
+</script>
+
+</body>
+</html>
