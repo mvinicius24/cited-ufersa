@@ -509,12 +509,19 @@
 
     adminContainer.style.display = 'none';
 
+    // ADICIONE ESTE BLOCO ABAIXO:
+// Permite fazer o login ao pressionar "Enter" no campo de senha
+inputSenhaAcesso.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        btnEntrarAdmin.click(); // Dispara o clique do botão de entrar
+    }
+});
+
     btnEntrarAdmin.addEventListener('click', async () => {
         const senhaDigitada = inputSenhaAcesso.value;
         authErrorMsg.style.display = 'none';
 
         try {
-            // Busca na coleção 'responsaveis'
             const q = collection(db, "responsaveis");
             const snapshot = await getDocs(q);
             
@@ -716,17 +723,34 @@
 
             const obsTexto = dados.observacoes || dados.obs || '-';
 
-            // Renderização dinâmica dos botões de acordo com o status atual
+            // Renderização dinâmica dos botões e status
             let acoesStatusHtml = '';
+            let corStatusClass = 'pendente';
+            
             if (statusAtual === 'Concluído') {
+                corStatusClass = 'concluido';
                 acoesStatusHtml = `<span style="font-size: 11px; color: #16a34a; font-weight: bold;">Concluído por: ${dados.responsavelConclusao || dados.responsavelAceite || 'N/A'}</span>`;
+            } else if (statusAtual === 'Negado') {
+                corStatusClass = 'negado'; // Caso queira estilizar no CSS
+                acoesStatusHtml = `
+                    <span style="font-size: 11px; color: #dc2626; font-weight: bold; display: block;">Negado por: ${dados.responsavelNegativa || 'N/A'}</span>
+                    <small style="color: #64748b;" title="${dados.motivoNegativa || ''}">Motivo: ${dados.motivoNegativa || 'Não informado'}</small>
+                `;
             } else if (statusAtual === 'Em Andamento' || dados.responsavelAceite) {
                 acoesStatusHtml = `
-                    <span style="font-size: 10px; color: #0369a1; display: block; margin-bottom: 4px;">Aceito por: ${dados.responsavelAceite}</span>
-                    <button class="btn-action btn-concluir" data-id="${id}" title="Marcar como Concluído">🏁 Concluir</button>
+                    <span style="font-size: 10px; color: #0369a1; display: block; margin-bottom: 2px;">Aceito por: ${dados.responsavelAceite}</span>
+                    <div style="display: flex; gap: 4px; margin-top: 2px;">
+                        <button class="btn-action btn-concluir" data-id="${id}" title="Marcar como Concluído" style="background-color: #16a34a; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🏁 Concluir</button>
+                        <button class="btn-action btn-rejeitar" data-id="${id}" title="Rejeitar solicitação" style="background-color: ##fcf9f9; color: black; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">❌ Rejeitar</button>
+                    </div>
                 `;
             } else {
-                acoesStatusHtml = `<button class="btn-action btn-aceitar" data-id="${id}" title="Aceitar solicitação">✅ Aceitar</button>`;
+                acoesStatusHtml = `
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-action btn-aceitar" data-id="${id}" title="Aceitar solicitação">✅ Aceitar</button>
+                        <button class="btn-action btn-rejeitar" data-id="${id}" title="Rejeitar solicitação" style="background-color: ##fcf9f9; color: black; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">❌ Rejeitar </button>
+                    </div>
+                `;
             }
 
             const tr = document.createElement('tr');
@@ -748,7 +772,7 @@
                     <small style="color:#0284c7">${estadoFisicoAmostra} (${qtdAmostras} amostr.)</small>
                 </td>
                 <td><span class="tag-risco ${riscosFormatados.toLowerCase().includes('nenhum') ? 'nao' : 'sim'}">${riscosFormatados}</span></td>
-                <td><span class="tag-status ${statusAtual === 'Concluído' ? 'concluido' : 'pendente'}">${statusAtual}</span></td>
+                <td><span class="tag-status ${corStatusClass}">${statusAtual}</span></td>
                 <td>${dataSugeridaFormatada}</td>
                 <td>${obsTexto}</td>
                 <td>
@@ -779,7 +803,6 @@
         const leftMargin = 15;
         const contentWidth = 180;
 
-        // --- CABEÇALHO GLOBAL ---
         docPdf.setFont("helvetica", "bold");
         docPdf.setFontSize(10);
         docPdf.text("UNIVERSIDADE FEDERAL RURAL DO SEMI-ÁRIDO - UFERSA", 105, 12, { align: "center" });
@@ -921,24 +944,10 @@
         const checkAgradecimento = dados.declaraAgradecimento ? "[X]" : "[ ]";
         adicionarLinha("Termo", `${checkAgradecimento} Declaro estar ciente da necessidade de reconhecer a utilização da infraestrutura do LSRX nos trabalhos acadêmicos e científicos decorrentes das análises realizadas.`);
 
-        // --- SALVAR O ARQUIVO ---
         docPdf.save(`${protocolo}.pdf`);
-
-        // Abre a janela do Gmail pré-preenchida para enviar ao aluno
-        const destinatario = dados.email || '';
-        const nomeSolicitante = dados.nome || dados.solicitante || 'Pesquisador';
-        const assunto = encodeURIComponent(`Comprovante de Solicitação de Análise - Protocolo: ${protocolo}`);
-        const corpoMensagem = encodeURIComponent(
-            `Olá, ${nomeSolicitante}!\n\n` +
-            `Segue em anexo o formulário completo em PDF referente à sua solicitação de análise (Protocolo: ${protocolo}) no laboratório.\n\n` +
-            `Atenciosamente,\nEquipe LSRX/LDFF.`
-        );
-        const urlGmail = `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${destinatario}&su=${assunto}&body=${corpoMensagem}`;
-        window.open(urlGmail, '_blank');
     }
 
     function atribuirEventosBotoes() {
-        // Evento para o botão Aceitar
         document.querySelectorAll('.btn-aceitar').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const idDoc = e.currentTarget.getAttribute('data-id');
@@ -959,7 +968,6 @@
             });
         });
 
-        // Evento para o botão Concluir
         document.querySelectorAll('.btn-concluir').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const idDoc = e.currentTarget.getAttribute('data-id');
@@ -975,6 +983,35 @@
                     } catch (error) {
                         console.error("Erro ao concluir:", error);
                         alert("Erro ao concluir a solicitação.");
+                    }
+                }
+            });
+        });
+
+        // Evento para o botão Negar com justificativa
+        document.querySelectorAll('.btn-rejeitar').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const idDoc = e.currentTarget.getAttribute('data-id');
+                const motivo = prompt("Digite a justificativa para rejeitar esta solicitação:");
+                
+                if (motivo !== null) { // Se o usuário não clicou em cancelar
+                    if (motivo.trim() === "") {
+                        alert("É necessário informar uma justificativa para rejeitar a solicitação.");
+                        return;
+                    }
+
+                    try {
+                        const docRef = doc(db, "solicitacoes", idDoc);
+                        await updateDoc(docRef, { 
+                            status: "Negado",
+                            motivoNegativa: motivo.trim(),
+                            responsavelNegativa: nomeResponsavelLogado || "Administrador",
+                            dataNegativa: new Date().toISOString()
+                        });
+                        carregarSolicitacoes();
+                    } catch (error) {
+                        console.error("Erro ao rejeitar a solicitação:", error);
+                        alert("Erro ao salvar a recusa no banco de dados.");
                     }
                 }
             });
@@ -1032,7 +1069,7 @@
         }
 
         let csvContent = "data:text/csv;charset=utf-8,sep=;\r\n";
-        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao\r\n";
+        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao;MotivoNegativa\r\n";
 
         listaDadosCache.forEach(item => {
             const codigo = item.codigoProtocolo || item.codigo || '';
@@ -1053,8 +1090,9 @@
             const observacoes = `"${(item.observacoes || '').replace(/"/g, '""')}"`;
             const responsavelAceite = `"${(item.responsavelAceite || '').replace(/"/g, '""')}"`;
             const responsavelConclusao = `"${(item.responsavelConclusao || '').replace(/"/g, '""')}"`;
+            const motivoNegativa = `"${(item.motivoNegativa || '').replace(/"/g, '""')}"`;
 
-            const linha = [codigo, dataEnvio, nome, categoria, origem, finalidade, orientador, tecnicas, email, telefone, numAmostras, estadoFisico, riscos, status, dataSugerida, observacoes, responsavelAceite, responsavelConclusao].join(";");
+            const linha = [codigo, dataEnvio, nome, categoria, origem, finalidade, orientador, tecnicas, email, telefone, numAmostras, estadoFisico, riscos, status, dataSugerida, observacoes, responsavelAceite, responsavelConclusao, motivoNegativa].join(";");
             csvContent += linha + "\r\n";
         });
 
