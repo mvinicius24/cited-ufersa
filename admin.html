@@ -224,10 +224,10 @@
         .btn-concluir:hover { background-color: #059669; }
 
         .btn-delete {
-            background-color: #ef4444;
-            color: white;
+            background-color: #fcf9f9;
+            color: rgb(235, 30, 30);
         }
-        .btn-delete:hover { background-color: #dc2626; }
+        .btn-delete:hover { background-color: #d42828; }
 
         .loading {
             text-align: center;
@@ -414,6 +414,7 @@
         <div>
             <h2>Painel Admin - LSRX / LDFF</h2>
             <p style="color: #64748b; font-size: 13px;">Gerenciamento de solicitações de análises - UFERSA</p>
+            <p style="color: #64748b; font-size: 13px;">Responsável Técnico: <span id="displayResponsavel">Não logado</span> </p>
         </div>
         <div class="actions-menu">
             <button class="btn btn-csv" id="btnExportarCsv">📊 CSV</button>
@@ -497,8 +498,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- CONTROLE DE SENHA ---
-    const SENHA_ADMIN = "cited.ufersa"; // Altere para a senha desejada
+ // --- CONTROLE DE SENHA E RESPONSÁVEL ---
+    let nomeResponsavelLogado = ""; 
 
     const authOverlay = document.getElementById('auth-overlay');
     const adminContainer = document.querySelector('.admin-container');
@@ -506,28 +507,37 @@
     const btnEntrarAdmin = document.getElementById('btnEntrarAdmin');
     const authErrorMsg = document.getElementById('authErrorMsg');
 
-    // Oculta o painel principal inicialmente
     adminContainer.style.display = 'none';
 
-    function liberarPainel() {
-        authOverlay.style.display = 'none';
-        adminContainer.style.display = 'block';
-        carregarSolicitacoes(); // Chama o carregamento original dos dados
-    }
+    btnEntrarAdmin.addEventListener('click', async () => {
+        const senhaDigitada = inputSenhaAcesso.value;
+        authErrorMsg.style.display = 'none';
 
-    btnEntrarAdmin.addEventListener('click', () => {
-        if (inputSenhaAcesso.value === SENHA_ADMIN) {
-            liberarPainel();
-        } else {
-            authErrorMsg.style.display = 'block';
-            inputSenhaAcesso.value = '';
-            inputSenhaAcesso.focus();
-        }
-    });
+        try {
+            // Busca na coleção 'responsaveis'
+            const q = collection(db, "responsaveis");
+            const snapshot = await getDocs(q);
+            
+            let encontrado = null;
+            snapshot.forEach((doc) => {
+                if (doc.data().senha === senhaDigitada) {
+                    encontrado = doc.data().nome;
+                }
+            });
 
-    inputSenhaAcesso.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            btnEntrarAdmin.click();
+            if (encontrado) {
+                nomeResponsavelLogado = encontrado;
+                document.getElementById('displayResponsavel').innerText = nomeResponsavelLogado;
+                authOverlay.style.display = 'none';
+                adminContainer.style.display = 'block';
+                carregarSolicitacoes();
+            } else {
+                authErrorMsg.innerText = "Senha inválida.";
+                authErrorMsg.style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Erro ao validar login:", error);
+            alert("Erro na conexão com o banco de dados.");
         }
     });
 
@@ -706,9 +716,18 @@
 
             const obsTexto = dados.observacoes || dados.obs || '-';
 
-            const botaoConcluirHtml = statusAtual === 'Concluído' 
-                ? '' 
-                : `<button class="btn-action btn-concluir" data-id="${id}" title="Marcar como concluído">✅</button>`;
+            // Renderização dinâmica dos botões de acordo com o status atual
+            let acoesStatusHtml = '';
+            if (statusAtual === 'Concluído') {
+                acoesStatusHtml = `<span style="font-size: 11px; color: #16a34a; font-weight: bold;">Concluído por: ${dados.responsavelConclusao || dados.responsavelAceite || 'N/A'}</span>`;
+            } else if (statusAtual === 'Em Andamento' || dados.responsavelAceite) {
+                acoesStatusHtml = `
+                    <span style="font-size: 10px; color: #0369a1; display: block; margin-bottom: 4px;">Aceito por: ${dados.responsavelAceite}</span>
+                    <button class="btn-action btn-concluir" data-id="${id}" title="Marcar como Concluído">🏁 Concluir</button>
+                `;
+            } else {
+                acoesStatusHtml = `<button class="btn-action btn-aceitar" data-id="${id}" title="Aceitar solicitação">✅ Aceitar</button>`;
+            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -734,7 +753,7 @@
                 <td>${obsTexto}</td>
                 <td>
                     <div class="acoes-grupo">
-                        ${botaoConcluirHtml}
+                        ${acoesStatusHtml}
                         <button class="btn-action btn-pdf" data-id="${id}" title="Gerar e Baixar PDF">📄</button>
                         <button class="btn-action btn-delete" data-id="${id}" title="Excluir permanentemente">🗑️</button>
                     </div>
@@ -919,17 +938,43 @@
     }
 
     function atribuirEventosBotoes() {
+        // Evento para o botão Aceitar
+        document.querySelectorAll('.btn-aceitar').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const idDoc = e.currentTarget.getAttribute('data-id');
+                if (confirm("Deseja aceitar e assumir esta solicitação?")) {
+                    try {
+                        const docRef = doc(db, "solicitacoes", idDoc);
+                        await updateDoc(docRef, { 
+                            status: "Em Andamento",
+                            responsavelAceite: nomeResponsavelLogado || "Administrador",
+                            dataAceite: new Date().toISOString()
+                        });
+                        carregarSolicitacoes();
+                    } catch (error) {
+                        console.error("Erro ao aceitar:", error);
+                        alert("Erro ao realizar a operação.");
+                    }
+                }
+            });
+        });
+
+        // Evento para o botão Concluir
         document.querySelectorAll('.btn-concluir').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const idDoc = e.currentTarget.getAttribute('data-id');
-                if (confirm("Deseja marcar este agendamento como Concluído?")) {
+                if (confirm("Deseja marcar esta solicitação como Concluída?")) {
                     try {
                         const docRef = doc(db, "solicitacoes", idDoc);
-                        await updateDoc(docRef, { status: "Concluído" });
+                        await updateDoc(docRef, { 
+                            status: "Concluído",
+                            responsavelConclusao: nomeResponsavelLogado || "Administrador",
+                            dataConclusao: new Date().toISOString()
+                        });
                         carregarSolicitacoes();
                     } catch (error) {
-                        console.error("Erro ao atualizar status:", error);
-                        alert("Erro ao realizar a operação.");
+                        console.error("Erro ao concluir:", error);
+                        alert("Erro ao concluir a solicitação.");
                     }
                 }
             });
@@ -987,7 +1032,7 @@
         }
 
         let csvContent = "data:text/csv;charset=utf-8,sep=;\r\n";
-        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes\r\n";
+        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao\r\n";
 
         listaDadosCache.forEach(item => {
             const codigo = item.codigoProtocolo || item.codigo || '';
@@ -1006,8 +1051,10 @@
             const status = item.status || 'Pendente';
             const dataSugerida = item.dataSugerida || '';
             const observacoes = `"${(item.observacoes || '').replace(/"/g, '""')}"`;
+            const responsavelAceite = `"${(item.responsavelAceite || '').replace(/"/g, '""')}"`;
+            const responsavelConclusao = `"${(item.responsavelConclusao || '').replace(/"/g, '""')}"`;
 
-            const linha = [codigo, dataEnvio, nome, categoria, origem, finalidade, orientador, tecnicas, email, telefone, numAmostras, estadoFisico, riscos, status, dataSugerida, observacoes].join(";");
+            const linha = [codigo, dataEnvio, nome, categoria, origem, finalidade, orientador, tecnicas, email, telefone, numAmostras, estadoFisico, riscos, status, dataSugerida, observacoes, responsavelAceite, responsavelConclusao].join(";");
             csvContent += linha + "\r\n";
         });
 
