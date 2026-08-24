@@ -804,8 +804,26 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         const contentWidth = 180;
 
         // --- URL RAW DO GITHUB ---
-        const urlLogo = "https://raw.githubusercontent.com/mvinicius24/cited-ufersa/86b3af9abef439ec90215661976e465c1c4b0d10/logo2.png";
+       const urlLogo = "https://raw.githubusercontent.com/mvinicius24/cited-ufersa/86b3af9abef439ec90215661976e465c1c4b0d10/logo2.png";
 
+// Carrega a imagem via Image() para redimensionar antes de botar no PDF
+const img = new Image();
+img.crossOrigin = "Anonymous";
+img.src = urlLogo;
+img.onload = function() {
+    // Cria um canvas pequeno para diminuir o peso
+    const canvas = document.createElement('canvas');
+    canvas.width = 150; // Largura reduzida
+    canvas.height = 180; // Altura reduzida
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    
+    // Pega a versão leve em Base64
+    const logoPequena = canvas.toDataURL('image/png');
+    
+    // Agora gera o PDF usando a imagem leve
+    docPdf.addImage(logoPequena, 'PNG', 15, 10, 15, 18);
+        
         try {
             docPdf.addImage(urlLogo, 'PNG', 15, 10, 15, 18);
         } catch (e) {
