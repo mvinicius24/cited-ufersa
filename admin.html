@@ -790,42 +790,41 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
     }
 
     function gerarPdfAdmin(id) {
-        const dados = listaDadosCache.find(item => item.id === id);
-        if (!dados) {
-            alert("Dados não encontrados.");
-            return;
-        }
+    const dados = listaDadosCache.find(item => item.id === id);
+    if (!dados) {
+        alert("Dados não encontrados.");
+        return;
+    }
 
-        const { jsPDF } = window.jspdf;
-        const docPdf = new jsPDF();
-        
-        let yPos = 40;
-        const leftMargin = 15;
-        const contentWidth = 180;
-
-        // --- URL RAW DO GITHUB ---
-       const urlLogo = "https://raw.githubusercontent.com/mvinicius24/cited-ufersa/86b3af9abef439ec90215661976e465c1c4b0d10/logo2.png";
-
-// Carrega a imagem via Image() para redimensionar antes de botar no PDF
-const img = new Image();
-img.crossOrigin = "Anonymous";
-img.src = urlLogo;
-img.onload = function() {
-    // Cria um canvas pequeno para diminuir o peso
-    const canvas = document.createElement('canvas');
-    canvas.width = 150; // Largura reduzida
-    canvas.height = 180; // Altura reduzida
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const { jsPDF } = window.jspdf;
+    const docPdf = new jsPDF();
     
-    // Pega a versão leve em Base64
-    const logoPequena = canvas.toDataURL('image/png');
+    let yPos = 40;
+    const leftMargin = 15;
+    const contentWidth = 180;
+
+    // --- URL RAW DO GITHUB ---
+    const urlLogo = "https://raw.githubusercontent.com/mvinicius24/cited-ufersa/86b3af9abef439ec90215661976e465c1c4b0d10/logo2.png";
+
+    // Carrega a imagem via Image() para redimensionar e diminuir o peso
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = urlLogo;
     
-    // Agora gera o PDF usando a imagem leve
-    docPdf.addImage(logoPequena, 'PNG', 15, 10, 15, 18);
-        
+    img.onload = function() {
         try {
-            docPdf.addImage(urlLogo, 'PNG', 15, 10, 15, 18);
+            // Cria um canvas pequeno para comprimir a imagem
+            const canvas = document.createElement('canvas');
+            canvas.width = 150; // Largura reduzida
+            canvas.height = 180; // Altura reduzida
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Pega a versão leve em Base64
+            const logoPequena = canvas.toDataURL('image/png');
+            
+            // Adiciona a imagem COMPRIMIDA (e não a do GitHub direto)
+            docPdf.addImage(logoPequena, 'PNG', 15, 10, 15, 18);
         } catch (e) {
             console.warn("Aviso: Não foi possível carregar a logo.", e);
         }
@@ -972,7 +971,14 @@ img.onload = function() {
         adicionarLinha("Termo", `${checkAgradecimento} Declaro estar ciente da necessidade de reconhecer a utilização da infraestrutura do LSRX nos trabalhos acadêmicos e científicos decorrentes das análises realizadas.`);
 
         docPdf.save(`${protocolo}.pdf`);
-    }
+    };
+
+    // Caso a imagem falhe ao carregar na Web, o PDF ainda é gerado sem ela para não travar o usuário
+    img.onerror = function() {
+        console.warn("Erro ao carregar a imagem do logo. Gerando PDF sem o logo.");
+        // Se quiser, você pode copiar a lógica de geração aqui ou tratar o erro
+    };
+}
 
     function atribuirEventosBotoes() {
         document.querySelectorAll('.btn-aceitar').forEach(button => {
