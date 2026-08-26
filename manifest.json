@@ -3,8 +3,8 @@
   "short_name": "Admin-CITed",
   "start_url": "./admin.html",
   "display": "standalone",
-  "background_color": "#fae1dd",
-  "theme_color": "#f08080",
+  "background_color": "#F8FAFC",
+  "theme-color": "#0A369D",
   "orientation": "portrait",
   "icons": [
     {
