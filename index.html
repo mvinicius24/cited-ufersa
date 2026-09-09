@@ -673,67 +673,47 @@
   });
 
   // --- 5. FUNÇÃO PARA GERAR O CÓDIGO NO PADRÃO LSRXAAMMNNNN ---
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, getDocs } from "firebase/firestore";
 
 async function gerarCodigoLSRX() {
   const agora = new Date();
   const ano = String(agora.getFullYear()).slice(-2); // Ex: "26"
-  const mes = String(agora.getMonth() + 1).padStart(2, '0'); // Ex: "09"
+  const mes = String(agora.getMonth() + 1).padStart(2, '0'); // Ex: "09" ou "10"
 
+  // Prefixo para identificar todos os códigos do ANO ATUAL (ex: "LSRX26")
   const prefixoAno = `LSRX${ano}`;
   let maiorSequencial = 0;
 
   try {
-    // 1. Tenta buscar ordenando do maior para o menor no ano atual
-    const q = query(
-      collection(db, "solicitacoes"),
-      where("codigoProtocolo", ">=", prefixoAno),
-      where("codigoProtocolo", "<=", `${prefixoAno}\uf8ff`),
-      orderBy("codigoProtocolo", "desc"),
-      limit(10) // Pega os últimos criados no ano para validar o maior número
-    );
-
+    // Traz a lista de solicitações
+    const q = query(collection(db, "solicitacoes"));
     const querySnapshot = await getDocs(q);
 
     querySnapshot.forEach((doc) => {
       const codigo = doc.data().codigoProtocolo;
+
+      // Filtra apenas os códigos que pertencem ao ANO ATUAL (LSRX26...)
       if (codigo && codigo.startsWith(prefixoAno) && codigo.length === 12) {
-        // Extrai os últimos 4 dígitos
-        const num = parseInt(codigo.slice(-4), 10);
-        if (!isNaN(num) && num > maiorSequencial) {
-          maiorSequencial = num;
+        // Pega APENAS os 4 últimos dígitos (ex: "LSRX26090007" -> "0007" -> 7)
+        const sequencial = parseInt(codigo.slice(-4), 10);
+
+        // Guarda o maior número encontrado no ano, independentemente do mês
+        if (!isNaN(sequencial) && sequencial > maiorSequencial) {
+          maiorSequencial = sequencial;
         }
       }
     });
   } catch (error) {
-    console.error("Erro ao consultar Firestore (fallback ativado):", error);
-    
-    // 2. FALLBACK DE SEGURANÇA:
-    // Se der erro de índice no Firestore, busca na coleção e encontra o maior manualmente
-    try {
-      const qFallback = query(collection(db, "solicitacoes"));
-      const snapshotFallback = await getDocs(qFallback);
-      
-      snapshotFallback.forEach((doc) => {
-        const codigo = doc.data().codigoProtocolo;
-        if (codigo && codigo.startsWith(prefixoAno) && codigo.length === 12) {
-          const num = parseInt(codigo.slice(-4), 10);
-          if (!isNaN(num) && num > maiorSequencial) {
-            maiorSequencial = num;
-          }
-        }
-      });
-    } catch (errFallback) {
-      console.error("Erro no fallback de busca:", errFallback);
-    }
+    console.error("Erro ao gerar sequência do protocolo:", error);
   }
 
+  // Incrementa +1 em cima do maior número encontrado no ano
   const proximoNumero = maiorSequencial + 1;
-  const numeroFormatado = String(proximoNumero).padStart(4, '0');
+  const numeroFormatado = String(proximoNumero).padStart(4, '0'); // Ex: "0008"
 
-  return `${prefixoAno}${mes}${numeroFormatado}`;
+  // Monta com o MÊS ATUAL, mas com a sequência contínua
+  return `${prefixoAno}${mes}${numeroFormatado}`; // Ex: "LSRX26100008"
 }
-
   // --- 6. EVENTO DE ENVIO COM VALIDAÇÃO DE LIMITE DO FIREBASE ---
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
