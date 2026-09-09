@@ -674,34 +674,43 @@
 
   // --- 5. FUNÇÃO PARA GERAR O CÓDIGO NO PADRÃO LSRXAAMMNNNN ---
   async function gerarCodigoLSRX() {
-    const agora = new Date();
-    const anoCompleto = String(agora.getFullYear());
-    const ano = anoCompleto.slice(-2); // Ex: "26"
-    const mes = String(agora.getMonth() + 1).padStart(2, '0'); // Ex: "08"
+  const agora = new Date();
+  const ano = String(agora.getFullYear()).slice(-2); // Ex: "26"
+  const mes = String(agora.getMonth() + 1).padStart(2, '0'); // Ex: "09"
+
+  const prefixoLaboratorioEAno = `LSRX${ano}`; // Prefixo para buscar registros do ano atual
+  let maiorSequencial = 0;
+
+  try {
+    // Busca apenas os protocolos do ano vigente
+    const q = query(
+      collection(db, "solicitacoes"),
+      where("codigoProtocolo", ">=", prefixoLaboratorioEAno),
+      where("codigoProtocolo", "<", `LSRX${Number(ano) + 1}`)
+    );
     
-    const prefixoDesejado = `LSRX${ano}${mes}`; // Ex: "LSRX2608"
-    let proximoNumero = 1;
+    const querySnapshot = await getDocs(q);
 
-    try {
-      const q = query(collection(db, "solicitacoes"));
-      const querySnapshot = await getDocs(q);
-      
-      let contadorMesAno = 0;
-      querySnapshot.forEach((doc) => {
-        const dados = doc.data();
-        if (dados.codigoProtocolo && dados.codigoProtocolo.startsWith(prefixoDesejado)) {
-          contadorMesAno++;
+    querySnapshot.forEach((doc) => {
+      const codigo = doc.data().codigoProtocolo;
+      if (codigo && codigo.length === 12) {
+        // Extrai os últimos 4 dígitos do código (ex: "LSRX26090007" -> 7)
+        const sequencialAtual = parseInt(codigo.slice(-4), 10);
+        if (!isNaN(sequencialAtual) && sequencialAtual > maiorSequencial) {
+          maiorSequencial = sequencialAtual;
         }
-      });
-
-      proximoNumero = contadorMesAno + 1;
-    } catch (error) {
-      console.error("Erro ao calcular sequência do protocolo:", error);
-    }
-
-    const numeroFormatado = String(proximoNumero).padStart(4, '0'); // NNNN
-    return `${prefixoDesejado}${numeroFormatado}`;
+      }
+    });
+  } catch (error) {
+    console.error("Erro ao calcular sequência do protocolo:", error);
   }
+
+  const proximoNumero = maiorSequencial + 1;
+  const numeroFormatado = String(proximoNumero).padStart(4, '0'); // NNNN
+
+  // Retorna com o mês atual embutido no meio (LSRX + AA + MM + NNNN)
+  return `${prefixoLaboratorioEAno}${mes}${numeroFormatado}`;
+}
 
   // --- 6. EVENTO DE ENVIO COM VALIDAÇÃO DE LIMITE DO FIREBASE ---
   form.addEventListener('submit', async (e) => {
