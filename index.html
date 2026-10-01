@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>Solicitação de Análises e Medidas - LSRX / UFERSA</title>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
     <style>
@@ -533,6 +533,11 @@
   const db = getFirestore(app);
   const form = document.getElementById('lsrxForm');
 
+  // URL do Google Apps Script responsável por salvar os arquivos no Google Drive.
+  // SUBSTITUA pelo URL da implantação do seu Apps Script.
+  const GOOGLE_DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbym9qNiqdFhOWbmmAicDjbOSEEtvOw_xFpS4NIQka4bvGWACTUBR-MmE9LM_Kpv7CCV/exec";
+console.log("URL DO APPS SCRIPT:", GOOGLE_DRIVE_UPLOAD_URL);
+
   
   // --- 1. CONTROLE DOS CAMPOS CONDICIONAIS ---
   function atualizarCamposCondicionais() {
@@ -713,7 +718,651 @@ async function gerarCodigoLSRX() {
   // Monta com o MÊS ATUAL, mas com a sequência contínua
   return `${prefixoAno}${mes}${numeroFormatado}`; // Ex: "LSRX26100008"
 }
-  // --- 6. EVENTO DE ENVIO COM VALIDAÇÃO DE LIMITE DO FIREBASE ---
+  // --- 6. UPLOAD DO DOCUMENTO DE SEGURANÇA PARA O GOOGLE DRIVE ---
+async function enviarArquivoParaGoogleDrive(arquivo, codigoProtocolo, firestoreDocId) {
+
+ console.log("🚨 UPLOAD FISPQ CHAMADO:", {
+        arquivo: arquivo.name,
+        protocolo: codigoProtocolo,
+        firestoreDocId: firestoreDocId,
+        hora: new Date().toISOString()
+    });
+
+    if (!arquivo) return null;
+
+    if (!GOOGLE_DRIVE_UPLOAD_URL) {
+        throw new Error("O URL do Google Apps Script não foi configurado.");
+    }
+
+    const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            const resultado = reader.result;
+            resolve(resultado.split(',')[1]);
+        };
+
+        reader.onerror = () => {
+            reject(new Error("Não foi possível ler o arquivo selecionado."));
+        };
+
+        reader.readAsDataURL(arquivo);
+    });
+
+    await fetch(GOOGLE_DRIVE_UPLOAD_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+            fileName: arquivo.name,
+            mimeType: arquivo.type || "application/octet-stream",
+            fileData: base64,
+            codigoProtocolo: codigoProtocolo,
+            firestoreDocId: firestoreDocId || ''
+        })
+    });
+
+    return {
+        success: true,
+        fileName: arquivo.name,
+        fileId: null,
+        fileUrl: null
+    };
+}
+
+async function testarEnvioPdfEmail() {
+
+  const docPdf = new window.jspdf.jsPDF();
+
+  docPdf.setFont("helvetica", "bold");
+  docPdf.setFontSize(16);
+  docPdf.text("TESTE DE ENVIO DE PDF - LSRX", 20, 30);
+
+  docPdf.setFont("helvetica", "normal");
+  docPdf.setFontSize(11);
+  docPdf.text("Este PDF foi gerado pelo sistema LSRX.", 20, 45);
+  docPdf.text("Teste de envio por e-mail.", 20, 55);
+
+  const pdfBase64 = docPdf.output('datauristring');
+
+  await fetch(GOOGLE_DRIVE_UPLOAD_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      acao: "enviarEmail",
+
+      destinatario: "vinicius.mendonca@ufersa.edu.br",
+
+      nome: "Teste LSRX",
+
+      codigoProtocolo: "TESTE",
+
+      pdfNome: "teste-lsrx.pdf",
+
+      pdfBase64: pdfBase64
+    })
+  });
+
+  alert("Solicitação de envio enviada.");
+}
+
+window.testarEnvioPdfEmail = testarEnvioPdfEmail;
+
+async function gerarPdfParaEmail(dados) {
+
+  return new Promise((resolve, reject) => {
+
+    const { jsPDF } = window.jspdf;
+    const docPdf = new jsPDF();
+
+    let yPos = 40;
+    const leftMargin = 15;
+    const contentWidth = 180;
+
+    const urlLogo = "https://raw.githubusercontent.com/mvinicius24/cited-ufersa/86b3af9abef439ec90215661976e465c1c4b0d10/logo2.png";
+
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = urlLogo;
+
+    function gerarConteudoPDF() {
+
+      try {
+
+        // ================= CABEÇALHO =================
+
+        docPdf.setFont("helvetica", "bold");
+        docPdf.setFontSize(10);
+        docPdf.text(
+          "UNIVERSIDADE FEDERAL RURAL DO SEMI-ÁRIDO - UFERSA",
+          105,
+          12,
+          { align: "center" }
+        );
+
+        docPdf.setFontSize(8);
+        docPdf.text(
+          "CENTRO DE CIÊNCIAS EXATAS E NATURAIS - CCEN",
+          105,
+          16,
+          { align: "center" }
+        );
+
+        docPdf.text(
+          "LABORATÓRIO DE SÍNTESE E RAIOS-X (LSRX)",
+          105,
+          20,
+          { align: "center" }
+        );
+
+        docPdf.text(
+          "LABORATÓRIO DE DEPOSIÇÃO DE FILMES FINOS (LDFF)",
+          105,
+          24,
+          { align: "center" }
+        );
+
+        docPdf.setFontSize(10);
+        docPdf.text(
+          "FORMULÁRIO DE SOLICITAÇÃO DE ANÁLISES E MEDIDAS",
+          105,
+          29,
+          { align: "center" }
+        );
+
+        // ================= PROTOCOLO =================
+
+        const protocolo =
+          dados.codigoProtocolo ||
+          dados.codigo ||
+          'N/A';
+
+        const dataBase =
+          dados.dataEnvio ||
+          dados.data ||
+          dados.criadoEm;
+
+        const dataEnvioFormatada = dataBase
+          ? new Date(dataBase).toLocaleString('pt-BR')
+          : 'N/A';
+
+        docPdf.setFontSize(8);
+        docPdf.setFont("helvetica", "bold");
+
+        docPdf.text(
+          `Protocolo: ${protocolo}`,
+          leftMargin,
+          35
+        );
+
+        docPdf.text(
+          `Data de Envio: ${dataEnvioFormatada}`,
+          135,
+          35
+        );
+
+        docPdf.setLineWidth(0.3);
+        docPdf.line(
+          leftMargin,
+          36,
+          195,
+          36
+        );
+
+        // ================= FUNÇÕES AUXILIARES =================
+
+        function checarQuebraPagina(alturaEstimada) {
+
+          if (yPos + alturaEstimada > 280) {
+            docPdf.addPage();
+            yPos = 20;
+          }
+
+        }
+
+        function adicionarSecao(titulo) {
+
+          checarQuebraPagina(12);
+
+          docPdf.setFontSize(9);
+          docPdf.setFont("helvetica", "bold");
+
+          docPdf.setTextColor(30, 58, 138);
+
+          docPdf.text(
+            titulo,
+            leftMargin,
+            yPos
+          );
+
+          docPdf.setTextColor(0, 0, 0);
+
+          yPos += 5;
+        }
+
+        function adicionarLinha(rotulo, valor) {
+
+          docPdf.setFontSize(8);
+          docPdf.setFont("helvetica", "bold");
+
+          const textoCompleto =
+            `${rotulo}: ${valor || 'N/A'}`;
+
+          const linhas =
+            docPdf.splitTextToSize(
+              textoCompleto,
+              contentWidth
+            );
+
+          checarQuebraPagina(
+            (linhas.length * 3.5) + 2
+          );
+
+          docPdf.setFont("helvetica", "normal");
+
+          docPdf.text(
+            linhas,
+            leftMargin,
+            yPos
+          );
+
+          yPos +=
+            (linhas.length * 3.5) + 1.5;
+        }
+
+        // ================= SEÇÃO 1 =================
+
+        adicionarSecao(
+          "1. Informações do Solicitante"
+        );
+
+        adicionarLinha(
+          "Nome",
+          dados.nome || dados.solicitante
+        );
+
+        adicionarLinha(
+          "E-mail",
+          dados.email
+        );
+
+        adicionarLinha(
+          "Telefone",
+          dados.telefone || dados.celular
+        );
+
+        adicionarLinha(
+          "Categoria",
+          dados.categoria || dados.tipoUsuario
+        );
+
+        adicionarLinha(
+          "Orientador(a)",
+          dados.orientador ||
+          dados.professorOrientador ||
+          'Não se aplica'
+        );
+
+        adicionarLinha(
+          "Origem",
+          dados.origem
+        );
+
+        if (dados.origem === 'UFERSA') {
+
+          adicionarLinha(
+            "Campus UFERSA",
+            dados.campusUfersa
+          );
+
+          adicionarLinha(
+            "Laboratório UFERSA",
+            dados.labUfersa
+          );
+
+        } else if (
+          dados.origem ===
+          'Outra instituição de ensino/pesquisa'
+        ) {
+
+          adicionarLinha(
+            "Nome da Instituição",
+            dados.nomeOutraInst
+          );
+
+          adicionarLinha(
+            "Laboratório",
+            dados.labOutraInst
+          );
+
+        } else if (dados.origem === 'Empresa') {
+
+          adicionarLinha(
+            "Nome da Empresa",
+            dados.nomeEmpresa
+          );
+
+        } else if (
+          dados.origem ===
+          'Outra instituição/organização'
+        ) {
+
+          adicionarLinha(
+            "Nome da Organização",
+            dados.nomeOutraOrg
+          );
+        }
+
+        yPos += 2;
+
+        // ================= SEÇÃO 2 =================
+
+        adicionarSecao(
+          "2. Informações do Trabalho"
+        );
+
+        adicionarLinha(
+          "Finalidade",
+          dados.finalidade
+        );
+
+        if (
+          ['TCC', 'Dissertação', 'Tese']
+            .includes(dados.finalidade)
+        ) {
+
+          adicionarLinha(
+            "Título do Trabalho",
+            dados.tituloTrabalho
+          );
+
+        } else if (
+          ['Projeto de pesquisa', 'Prestação de serviço']
+            .includes(dados.finalidade)
+        ) {
+
+          adicionarLinha(
+            "Projeto de Fomento",
+            dados.projetoFomento
+          );
+
+        } else if (
+          dados.finalidade === 'Outro'
+        ) {
+
+          adicionarLinha(
+            "Outra Finalidade",
+            dados.outraFinalidade
+          );
+        }
+
+        yPos += 2;
+
+        // ================= SEÇÃO 3 =================
+
+        adicionarSecao(
+          "3. Técnica Solicitada"
+        );
+
+        adicionarLinha(
+          "Técnicas Solicitadas",
+          dados.tecnicas || dados.equipamento
+        );
+
+        yPos += 2;
+
+        // ================= SEÇÃO 4 =================
+
+        adicionarSecao(
+          "4. Informações das Amostras"
+        );
+
+        adicionarLinha(
+          "Qtd. Amostras",
+          dados.numAmostras ||
+          dados.quantidadeAmostras
+        );
+
+        adicionarLinha(
+          "Estado Físico",
+          dados.estadoFisico
+        );
+
+        adicionarLinha(
+          "Identificação",
+          dados.identificacaoAmostras ||
+          dados.amostrasDescricao
+        );
+
+        adicionarLinha(
+          "Composição Química",
+          dados.composicao
+        );
+
+        adicionarLinha(
+          "Descrição Detalhada",
+          dados.descricaoAmostra
+        );
+
+        yPos += 2;
+
+        // ================= SEÇÃO 5 =================
+
+        adicionarSecao(
+          "5. Objetivos da Análise"
+        );
+
+        adicionarLinha(
+          "Objetivo da Análise",
+          dados.objetivoAnalise
+        );
+
+        yPos += 2;
+
+        // ================= SEÇÃO 6 =================
+
+        adicionarSecao(
+          "6. Riscos"
+        );
+
+        adicionarLinha(
+          "Riscos Declarados",
+          dados.riscos ||
+          'Nenhum risco conhecido'
+        );
+
+        adicionarLinha(
+          "Detalhes dos Riscos",
+          dados.detalhesRisco
+        );
+
+        yPos += 2;
+
+        // ================= SEÇÃO 7 =================
+
+        adicionarSecao(
+          "7. Condições de Análise"
+        );
+
+        adicionarLinha(
+          "Tipo de Condição",
+          dados.tipoCondicao
+        );
+
+        if (dados.tipoCondicao === 'Especifica') {
+
+          adicionarLinha(
+            "Condições DRX",
+            dados.condDrx
+          );
+
+          adicionarLinha(
+            "Condições FTIR",
+            dados.condFtir
+          );
+
+          adicionarLinha(
+            "Condições TG/DSC",
+            dados.condTpdsc
+          );
+
+          adicionarLinha(
+            "Condições SPUTTERING",
+            dados.condSputtering
+          );
+        }
+
+        yPos += 2;
+
+        // ================= SEÇÃO 8 =================
+
+        adicionarSecao(
+          "8. Data de Entrega das Amostras e Observações"
+        );
+
+        let dataSugerida =
+          dados.dataSugerida ||
+          dados.previsaoEntrega ||
+          'N/A';
+
+        if (
+          typeof dataSugerida === 'string' &&
+          dataSugerida.includes('-')
+        ) {
+          dataSugerida =
+            dataSugerida
+              .split('-')
+              .reverse()
+              .join('/');
+        }
+
+        adicionarLinha(
+          "Data Sugerida Entrega",
+          dataSugerida
+        );
+
+        adicionarLinha(
+          "Observações",
+          dados.observacoes
+        );
+
+        yPos += 2;
+
+        // ================= SEÇÃO 9 =================
+
+        adicionarSecao(
+          "9. Declaração de Amostras e Riscos"
+        );
+
+        const checkDados =
+          dados.declaraDados
+            ? "[X]"
+            : "[ ]";
+
+        adicionarLinha(
+          "Termo",
+          `${checkDados} Declaro que as informações fornecidas sobre as amostras são corretas e que foram informados os riscos conhecidos associados ao seu manuseio e análise.`
+        );
+
+        yPos += 2;
+
+        // ================= SEÇÃO 10 =================
+
+        adicionarSecao(
+          "10. Compromisso de Menção e Agradecimento"
+        );
+
+        const checkAgradecimento =
+          dados.declaraAgradecimento
+            ? "[X]"
+            : "[ ]";
+
+        adicionarLinha(
+          "Termo",
+          `${checkAgradecimento} Declaro estar ciente da necessidade de reconhecer a utilização da infraestrutura do LSRX nos trabalhos acadêmicos e científicos decorrentes das análises realizadas.`
+        );
+
+        // Retorna o PDF em Base64
+        const pdfBase64 =
+          docPdf.output('datauristring');
+
+        resolve({
+          pdfBase64: pdfBase64,
+          protocolo: protocolo
+        });
+
+      } catch (erro) {
+
+        reject(erro);
+
+      }
+    }
+
+    // ================= CARREGAMENTO DA LOGO =================
+
+    img.onload = function() {
+
+      try {
+
+        const canvas =
+          document.createElement('canvas');
+
+        canvas.width = 150;
+        canvas.height = 180;
+
+        const ctx =
+          canvas.getContext('2d');
+
+        ctx.drawImage(
+          img,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+        const logoPequena =
+          canvas.toDataURL('image/png');
+
+        docPdf.addImage(
+          logoPequena,
+          'PNG',
+          15,
+          10,
+          15,
+          18
+        );
+
+      } catch (e) {
+
+        console.warn(
+          "Aviso: não foi possível carregar a logo.",
+          e
+        );
+      }
+
+      gerarConteudoPDF();
+    };
+
+    // Se a logo não carregar, gera o PDF mesmo assim
+    img.onerror = function() {
+
+      console.warn(
+        "Logo não carregada. Gerando PDF sem logo."
+      );
+
+      gerarConteudoPDF();
+    };
+
+  });
+}
+
+  // --- 7. EVENTO DE ENVIO COM VALIDAÇÃO DE LIMITE DO FIREBASE ---
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -801,6 +1450,16 @@ async function gerarCodigoLSRX() {
       // Gera o código e salva
       const codigoGerado = await gerarCodigoLSRX();
 
+      // Documento opcional. Os dados da solicitação são gravados primeiro no Firestore.
+      // Depois o Apps Script salva o arquivo no Drive e atualiza este mesmo documento
+      // com nome, ID e URL do arquivo.
+      const arquivoSeguranca = document.getElementById('documento-seguranca').files[0];
+      btnEnviar.innerText = arquivoSeguranca
+        ? "Preparando solicitação..."
+        : "Salvando solicitação...";
+
+      const resultadoArquivo = null;
+
       const origemSelecionada = document.getElementById('origem').value;
       const tipoCondicaoEl = document.querySelector('input[name="tipo_condicao"]:checked');
 
@@ -860,25 +1519,123 @@ async function gerarCodigoLSRX() {
         dataSugerida: document.getElementById('data-sugerida').value || '',
         observacoes: document.getElementById('observacoes').value || '',
 
+        // --- Documento de segurança no Google Drive ---
+        arquivoSegurancaNome: '',
+        arquivoSegurancaUrl: '',
+        arquivoSegurancaId: '',
+
         // --- 9 & 10. Declarações ---
         declaraDados: document.getElementById('declara-dados').checked,
         declaraAgradecimento: document.getElementById('declara-agradecimento').checked
       };
 
-      await addDoc(collection(db, "solicitacoes"), dadosSolicitacao);
+      const docRef = await addDoc(
+  collection(db, "solicitacoes"),
+  dadosSolicitacao
+);
+
+// ======================================================
+// SUCESSO IMEDIATO PARA O USUÁRIO
+// ======================================================
+
+const mensagemSucesso =
+  `Solicitação recebida com sucesso.\n` +
+  `Protocolo: ${codigoGerado}\n\n` +
+  `Uma cópia em PDF da solicitação será enviada para o e-mail informado.\n\n` +
+  `A solicitação será avaliada pela equipe do Laboratório de Síntese e Raios-X quanto à viabilidade técnica, às características das amostras e à disponibilidade do equipamento. O agendamento e as orientações para entrega das amostras serão informados posteriormente.`;
+
+alert(mensagemSucesso);
+
+// Libera e limpa o formulário imediatamente
+form.reset();
+
+btnEnviar.disabled = false;
+btnEnviar.innerText = "ENVIAR SOLICITAÇÃO DE ANÁLISE";
 
 
+// ======================================================
+// PROCESSAMENTO EM SEGUNDO PLANO
+// ======================================================
 
-      // Mensagem detalhada solicitada
-      const mensagemSucesso = 
-          `Solicitação recebida com sucesso.\n` +
-          `Protocolo: ${codigoGerado}\n\n` +
-          `Uma cópia em PDF da solicitação será enviada para o e-mail informado.\n\n` +
-          `A solicitação será avaliada pela equipe do Laboratório de Síntese e Raios-X quanto à viabilidade técnica, às características das amostras e à disponibilidade do equipamento. O agendamento e as orientações para entrega das amostras serão informados posteriormente.`;
+(async function processarEmSegundoPlano() {
 
-      alert(mensagemSucesso);
+  try {
 
-      form.reset();
+    // ------------------------------------------
+    // 1. ENVIA FISPQ PARA O GOOGLE DRIVE
+    // ------------------------------------------
+
+    if (arquivoSeguranca) {
+
+      await enviarArquivoParaGoogleDrive(
+        arquivoSeguranca,
+        codigoGerado,
+        docRef.id
+      );
+
+    }
+
+
+    // ------------------------------------------
+    // 2. GERA O PDF
+    // ------------------------------------------
+
+    const resultadoPdf =
+      await gerarPdfParaEmail(dadosSolicitacao);
+
+
+    // ------------------------------------------
+    // 3. ENVIA O PDF POR E-MAIL
+    // ------------------------------------------
+
+    await fetch(GOOGLE_DRIVE_UPLOAD_URL, {
+
+      method: "POST",
+
+      mode: "no-cors",
+
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+
+      body: JSON.stringify({
+
+        acao: "enviarEmail",
+
+        destinatario:
+          dadosSolicitacao.email,
+
+        nome:
+          dadosSolicitacao.nome,
+
+        codigoProtocolo:
+          codigoGerado,
+
+        pdfNome:
+          `${codigoGerado}.pdf`,
+
+        pdfBase64:
+          resultadoPdf.pdfBase64
+
+      })
+
+    });
+
+    console.log(
+      "Processamento em segundo plano concluído:",
+      codigoGerado
+    );
+
+  } catch (erroSegundoPlano) {
+
+    console.error(
+      "Erro no processamento em segundo plano:",
+      erroSegundoPlano
+    );
+
+  }
+
+})();
       
     } catch (error) {
       console.error("Ocorreu um erro ao processar a solicitação:", error);
