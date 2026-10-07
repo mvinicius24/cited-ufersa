@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#0A369D">
     <!-- Biblioteca para gerar PDF no painel admin -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         * {
             box-sizing: border-box;
@@ -63,7 +64,7 @@
             transition: background 0.2s;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
         }
 
         .btn-refresh { background-color: #0284c7; }
@@ -212,11 +213,7 @@
 
         .btn-action {
             border: none;
-            padding: 6px 8px;
-            border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
-            transition: background 0.2s;
         }
 
         .btn-concluir {
@@ -242,6 +239,81 @@
             display: none;
         }
 
+
+        /* ===== NOVO PAINEL DE INDICADORES ===== */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin: 0 0 15px;
+        }
+        .dashboard-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 6px rgba(15,23,42,.04);
+        }
+        .dashboard-card .card-label { color:#64748b; font-size:12px; font-weight:600; }
+        .dashboard-card .card-value { color:#1e293b; font-size:25px; font-weight:800; margin-top:4px; }
+        .dashboard-card .card-detail { color:#94a3b8; font-size:11px; margin-top:2px; }
+        .dashboard-card.total { border-top:4px solid #0284c7; }
+        .dashboard-card.pendente { border-top:4px solid #f59e0b; }
+        .dashboard-card.andamento { border-top:4px solid #6366f1; }
+        .dashboard-card.concluido { border-top:4px solid #10b981; }
+        .dashboard-card.negado { border-top:4px solid #ef4444; }
+
+        .results-summary { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 8px; color:#64748b; font-size:12px; }
+        .results-summary strong { color:#334155; }
+
+        .compact-table { min-width: 850px !important; }
+        .compact-table th, .compact-table td { padding: 10px 9px; vertical-align: middle; }
+        .compact-table td:nth-child(1) { white-space:nowrap; }
+        .solicitante-cell strong { display:block; color:#1e293b; }
+        .solicitante-cell small { color:#64748b; }
+        .tecnica-cell { color:#0369a1; font-weight:700; max-width:180px; }
+        .delivery-cell { white-space:nowrap; }
+        .status-cell { min-width:125px; }
+        .acoes-grupo { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+        .btn-action { width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; border-radius:7px; cursor:pointer; font-size:14px; transition:all .18s ease; }
+        .btn-action:hover { transform:translateY(-1px); box-shadow:0 2px 5px rgba(15,23,42,.12); }
+        .btn-action i { pointer-events:none; }
+        .btn-action.btn-detalhes { background:#e0f2fe; color:#0369a1; }
+        .btn-action.btn-detalhes:hover { background:#bae6fd; }
+        .btn-action.btn-pdf { background:#f1f5f9; color:#334155; }
+        .btn-action.btn-pdf:hover { background:#e2e8f0; }
+        .btn-action.btn-aceitar { background:#dcfce7; color:#166534; }
+        .btn-action.btn-aceitar:hover { background:#bbf7d0; }
+        .btn-action.btn-rejeitar { background:#fee2e2 !important; color:#991b1b !important; }
+        .btn-action.btn-rejeitar:hover { background:#fecaca !important; }
+        .tag-status.andamento { background:#e0e7ff; color:#4338ca; }
+        .tag-status.negado { background:#fee2e2; color:#b91c1c; }
+
+        /* ===== MODAL DE DETALHES ===== */
+        #modalDetalhes { display:none; position:fixed; inset:0; background:rgba(15,23,42,.62); z-index:10000; padding:20px; overflow-y:auto; }
+        .modal-detalhes-box { width:min(980px,100%); margin:20px auto; background:#fff; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,.25); overflow:hidden; }
+        .modal-detalhes-header { padding:17px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; gap:15px; }
+        .modal-detalhes-header h3 { color:#1e293b; font-size:18px; }
+        .modal-fechar { border:0; background:#e2e8f0; color:#334155; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:20px; }
+        .modal-fechar:hover { background:#cbd5e1; }
+        .modal-detalhes-body { padding:20px; }
+        .detalhes-resumo { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 14px; border:1px solid #e2e8f0; border-radius:9px; margin-bottom:15px; background:#fff; }
+        .detalhes-protocolo { font-size:17px; font-weight:800; color:#0369a1; }
+        .detalhes-secao { margin-bottom:16px; border:1px solid #e2e8f0; border-radius:9px; overflow:hidden; }
+        .detalhes-secao h4 { padding:9px 12px; background:#f8fafc; color:#334155; font-size:13px; border-bottom:1px solid #e2e8f0; }
+        .detalhes-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+        .detalhe-item { padding:9px 12px; border-bottom:1px solid #f1f5f9; }
+        .detalhe-item:nth-child(odd) { border-right:1px solid #f1f5f9; }
+        .detalhe-label { display:block; color:#64748b; font-size:10px; text-transform:uppercase; font-weight:700; margin-bottom:3px; }
+        .detalhe-valor { color:#1e293b; font-size:13px; line-height:1.45; word-break:break-word; }
+        .detalhes-texto { padding:11px 12px; color:#1e293b; font-size:13px; line-height:1.5; white-space:pre-wrap; }
+        .documento-link { display:inline-flex; align-items:center; gap:6px; color:#0369a1; font-weight:700; text-decoration:none; }
+        .documento-link:hover { text-decoration:underline; }
+        .modal-acoes { display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
+        .btn-fechar-modal { background:#64748b; }
+        @media (max-width: 900px) { .dashboard-cards { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        @media (max-width: 600px) { .dashboard-cards { grid-template-columns:1fr; } .detalhes-grid { grid-template-columns:1fr; } .detalhe-item:nth-child(odd) { border-right:0; } #modalDetalhes { padding:8px; } .modal-detalhes-body { padding:12px; } }
+
         @media print {
             body {
                 background-color: #ffffff;
@@ -254,7 +326,7 @@
                 max-width: 100%;
             }
 
-            header, .filter-bar, .config-panel, .acoes-grupo, th:last-child, td:last-child {
+            header, .filter-bar, .config-panel, .dashboard-cards, .results-summary, .acoes-grupo, th:last-child, td:last-child, #modalDetalhes {
                 display: none !important;
             }
 
@@ -419,22 +491,31 @@
             <p style="color: #64748b; font-size: 13px;">Responsável Técnico: <span id="displayResponsavel">Não logado</span> </p>
         </div>
         <div class="actions-menu">
-            <button class="btn btn-csv" id="btnExportarCsv">📊 CSV</button>
-            <button class="btn btn-refresh" id="btnRecarregar">🔄 Atualizar</button>
-            <button class="btn btn-print" id="btnImprimir">🖨️ Imprimir</button>
+            <button class="btn btn-csv" id="btnExportarCsv"><i class="fa-solid fa-file-csv"></i><span>CSV</span></button>
+            <button class="btn btn-refresh" id="btnRecarregar"><i class="fa-solid fa-rotate"></i><span>Atualizar</span></button>
+            <button class="btn btn-print" id="btnImprimir"><i class="fa-solid fa-print"></i><span>Imprimir</span></button>
         </div>
     </header>
 
     <!-- Painel de Controle de Limite Mensal -->
     <div class="config-panel">
         <div class="config-group">
-            <label for="inputLimiteMensal">⚙️ Limite Máximo de Envios no Mês:</label>
+            <label for="inputLimiteMensal"><i class="fa-solid fa-sliders"></i> Limite Máximo de Envios no Mês:</label>
             <input type="number" id="inputLimiteMensal" min="1" placeholder="Ex: 50">
             <button class="btn btn-config" id="btnSalvarLimite">Salvar Limite</button>
         </div>
         <div id="statusContadorMes" style="font-size: 13px; font-weight: 600; color: #475569;">
             Envios no mês atual: Carregando...
         </div>
+    </div>
+
+    <!-- Indicadores -->
+    <div class="dashboard-cards">
+        <div class="dashboard-card total"><div class="card-label">TOTAL</div><div class="card-value" id="cardTotal">0</div><div class="card-detail">Solicitações cadastradas</div></div>
+        <div class="dashboard-card pendente card-clicavel" id="cardPendenteBox" title="Mostrar solicitações pendentes"><div class="card-label">PENDENTES</div><div class="card-value" id="cardPendente">0</div><div class="card-detail">Aguardando aceite • clique para ver</div></div>
+        <div class="dashboard-card andamento"><div class="card-label">EM ANDAMENTO</div><div class="card-value" id="cardAndamento">0</div><div class="card-detail">Solicitações assumidas</div></div>
+        <div class="dashboard-card concluido"><div class="card-label">CONCLUÍDAS</div><div class="card-value" id="cardConcluido">0</div><div class="card-detail">Análises concluídas</div></div>
+        <div class="dashboard-card negado"><div class="card-label">NEGADAS</div><div class="card-value" id="cardNegado">0</div><div class="card-detail">Solicitações recusadas</div></div>
     </div>
 
     <!-- Barra de Filtros -->
@@ -445,44 +526,39 @@
         </div>
         <div class="filter-group">
             <label for="filtroEquipamento">Filtrar por Técnica / Equipamento</label>
-            <select id="filtroEquipamento">
-                <option value="">Todas as técnicas</option>
-            </select>
+            <select id="filtroEquipamento"><option value="">Todas as técnicas</option></select>
         </div>
         <div class="filter-group">
             <label for="filtroStatus">Filtrar por Status</label>
             <select id="filtroStatus">
                 <option value="">Todos os status</option>
-                <option value="Pendente">Pendente</option>
+                <option value="Pendente" selected>Pendente</option>
+                <option value="Em Andamento">Em Andamento</option>
                 <option value="Concluído">Concluído</option>
+                <option value="Negado">Negado</option>
             </select>
         </div>
     </div>
 
+    <div class="results-summary"><span id="resumoResultados">Carregando registros...</span><span>Use <strong>👁️ Ver</strong> para abrir a solicitação completa.</span></div>
+
     <div class="table-responsive">
         <div id="loading" class="loading">Carregando solicitações...</div>
-        <table id="tabelaAgendamentos" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Código Protocolo</th>
-                    <th>Data Sol.</th>
-                    <th>Solicitante / Categoria</th>
-                    <th>Finalidade / Trabalho</th>
-                    <th>Técnicas</th>
-                    <th>Contato</th>
-                    <th>Amostras</th>
-                    <th>Riscos</th>
-                    <th>Status</th>
-                    <th>Entrega Sugerida</th>
-                    <th>Observações</th>
-                    <th class="col-acao">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="corpoTabela">
-            </tbody>
+        <table id="tabelaAgendamentos" class="compact-table" style="display: none;">
+            <thead><tr>
+                <th>Protocolo</th><th>Data</th><th>Solicitante</th><th>Técnica / Equipamento</th><th>Entrega</th><th>Status</th><th class="col-acao">Ações</th>
+            </tr></thead>
+            <tbody id="corpoTabela"></tbody>
         </table>
     </div>
-</div>
+
+    <!-- Modal de detalhes -->
+    <div id="modalDetalhes" role="dialog" aria-modal="true" aria-labelledby="modalDetalhesTitulo">
+        <div class="modal-detalhes-box">
+            <div class="modal-detalhes-header"><h3 id="modalDetalhesTitulo">Detalhes da solicitação</h3><button class="modal-fechar" id="btnFecharDetalhes" title="Fechar">×</button></div>
+            <div class="modal-detalhes-body" id="modalDetalhesConteudo"></div>
+        </div>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -579,6 +655,34 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         }
     }
 
+    const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbym9qNiqdFhOWbmmAicDjbOSEEtvOw_xFpS4NIQka4bvGWACTUBR-MmE9LM_Kpv7CCV/exec";
+
+    async function enviarEmailAtualizacaoStatus(dados, novoStatus) {
+        const destinatario = dados.email || '';
+        if (!destinatario) {
+            console.warn('Solicitação sem e-mail. Aviso de status não enviado.');
+            return;
+        }
+
+        try {
+            await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    acao: 'enviarEmailStatus',
+                    status: novoStatus,
+                    destinatario: destinatario,
+                    nome: dados.nome || dados.solicitante || '',
+                    codigoProtocolo: dados.codigoProtocolo || dados.codigo || ''
+                })
+            });
+            console.log(`Solicitação ${dados.codigoProtocolo || dados.codigo || ''}: aviso de ${novoStatus} enviado.`);
+        } catch (erro) {
+            console.error(`Erro ao solicitar envio do aviso de ${novoStatus}:`, erro);
+        }
+    }
+
     async function carregarSolicitacoes() {
         loading.style.display = 'block';
         tabela.style.display = 'none';
@@ -661,10 +765,53 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         filtroEquipamento.value = valorAtual;
     }
 
+    function escapeHtml(valor) {
+        return String(valor ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function formatarData(valor) {
+        if (!valor) return 'N/A';
+        try { return new Date(valor).toLocaleDateString('pt-BR'); } catch { return String(valor); }
+    }
+
+    function formatarDataSugerida(valor) {
+        if (!valor) return 'N/A';
+        const texto = String(valor);
+        return /^\d{4}-\d{2}-\d{2}$/.test(texto) ? texto.split('-').reverse().join('/') : texto;
+    }
+
+    function atualizarIndicadores(dadosArray) {
+        const contagem = { total: dadosArray.length, pendente: 0, andamento: 0, concluido: 0, negado: 0 };
+        dadosArray.forEach(item => {
+            const status = item.status || 'Pendente';
+            if (status === 'Concluído') contagem.concluido++;
+            else if (status === 'Negado') contagem.negado++;
+            else if (status === 'Em Andamento' || item.responsavelAceite) contagem.andamento++;
+            else contagem.pendente++;
+        });
+        document.getElementById('cardTotal').textContent = contagem.total;
+        document.getElementById('cardPendente').textContent = contagem.pendente;
+        document.getElementById('cardAndamento').textContent = contagem.andamento;
+        document.getElementById('cardConcluido').textContent = contagem.concluido;
+        document.getElementById('cardNegado').textContent = contagem.negado;
+    }
+
+    function normalizarStatus(item) {
+        const status = item.status || '';
+        if (status === 'Concluído') return 'Concluído';
+        if (status === 'Negado') return 'Negado';
+        if (status === 'Em Andamento') return 'Em Andamento';
+        return 'Pendente';
+        return 'Pendente';
+    }
+
     function renderizarTabela(dadosArray) {
         corpoTabela.innerHTML = '';
+        atualizarIndicadores(dadosArray);
 
-        const termoBusca = filtroBusca.value.toLowerCase();
+        const termoBusca = filtroBusca.value.toLowerCase().trim();
         const eqFiltro = filtroEquipamento.value;
         const statusFiltro = filtroStatus.value;
 
@@ -675,121 +822,100 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
             const orientador = (item.orientador || item.professorOrientador || '').toLowerCase();
             const finalidade = (item.finalidade || item.tituloTrabalho || '').toLowerCase();
             const tecnicasStr = String(item.tecnicas || item.equipamento || item.tecnicaSelecionada || '').toLowerCase();
-            const status = item.status || 'Pendente';
-
+            const statusComparacao = normalizarStatus(item);
             const matchTexto = !termoBusca || codigo.includes(termoBusca) || nome.includes(termoBusca) || email.includes(termoBusca) || orientador.includes(termoBusca) || finalidade.includes(termoBusca);
             const matchEq = !eqFiltro || tecnicasStr.includes(eqFiltro.toLowerCase());
-            const matchStatus = !statusFiltro || status === statusFiltro;
-
+            const matchStatus = !statusFiltro || statusComparacao === statusFiltro;
             return matchTexto && matchEq && matchStatus;
         });
 
+        document.getElementById('resumoResultados').innerHTML = `<strong>${dadosFiltrados.length}</strong> solicitação(ões) exibida(s) de <strong>${dadosArray.length}</strong>`;
+
         if (dadosFiltrados.length === 0) {
-            corpoTabela.innerHTML = `<tr><td colspan="12" style="text-align: center; color: #64748b; padding: 20px;">Nenhum registro encontrado com esses filtros.</td></tr>`;
+            corpoTabela.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#64748b;padding:28px;">Nenhum registro encontrado com esses filtros.</td></tr>`;
             return;
         }
 
         dadosFiltrados.forEach((dados) => {
             const id = dados.id;
             const codigoProtocolo = dados.codigoProtocolo || dados.codigo || 'N/A';
-            
-            let dataEnvioFormatada = 'N/A';
-            const dataBruta = dados.dataEnvio || dados.data || dados.criadoEm;
-            if (dataBruta) {
-                dataEnvioFormatada = new Date(dataBruta).toLocaleDateString('pt-BR');
-            }
-
+            const dataEnvioFormatada = formatarData(dados.dataEnvio || dados.data || dados.criadoEm);
             const nomeSolicitante = dados.nome || dados.solicitante || 'N/A';
-            const categoriaSolicitante = dados.categoria || dados.tipoUsuario || 'N/A';
-            const origemSolicitante = dados.origem || dados.instituicao || 'N/A';
-
-            const finalidadeTrabalho = dados.finalidade || dados.tituloTrabalho || dados.projeto || 'N/A';
-            const nomeOrientador = dados.orientador || dados.professorOrientador || 'Não se aplica';
-
+            const categoria = dados.categoria || dados.tipoUsuario || '';
+            const origem = dados.origem || dados.instituicao || '';
             const tecnicasFormatadas = dados.tecnicas || dados.equipamento || dados.tecnicaSelecionada || 'N/A';
-            const contatoEmail = dados.email || 'N/A';
-            const contatoTelefone = dados.telefone || dados.celular || 'N/A';
-
-            const idAmostras = dados.identificacaoAmostras || dados.amostrasDescricao || dados.descricaoAmostras || 'N/A';
-            const qtdAmostras = dados.numAmostras || dados.quantidadeAmostras || dados.qtdAmostras || '?';
-            const estadoFisicoAmostra = dados.estadoFisico || dados.naturezaAmostra || '';
-
-            const riscosFormatados = dados.riscos || dados.grauRisco || 'Nenhum risco conhecido';
-            const statusAtual = dados.status || 'Pendente';
-            
-            let dataSugeridaFormatada = 'N/A';
-            const dataSugBruta = dados.dataSugerida || dados.previsaoEntrega;
-            if (dataSugBruta) {
-                dataSugeridaFormatada = dataSugBruta.includes('-') ? dataSugBruta.split('-').reverse().join('/') : dataSugBruta;
-            }
-
-            const obsTexto = dados.observacoes || dados.obs || '-';
-
-            // Renderização dinâmica dos botões e status
-            let acoesStatusHtml = '';
+            const dataSugeridaFormatada = formatarDataSugerida(dados.dataSugerida || dados.previsaoEntrega);
+            const statusAtual = normalizarStatus(dados);
             let corStatusClass = 'pendente';
-            
+            if (statusAtual === 'Concluído') corStatusClass = 'concluido';
+            else if (statusAtual === 'Negado') corStatusClass = 'negado';
+            else if (statusAtual === 'Em Andamento') corStatusClass = 'andamento';
+
+            let acoesStatusHtml = '';
             if (statusAtual === 'Concluído') {
-                corStatusClass = 'concluido';
-                acoesStatusHtml = `<span style="font-size: 11px; color: #16a34a; font-weight: bold;">Concluído por: ${dados.responsavelConclusao || dados.responsavelAceite || 'N/A'}</span>`;
+                acoesStatusHtml = `<span style="font-size:10px;color:#16a34a;font-weight:700;">Concluído por: ${escapeHtml(dados.responsavelConclusao || dados.responsavelAceite || 'N/A')}</span>`;
             } else if (statusAtual === 'Negado') {
-                corStatusClass = 'negado'; // Caso queira estilizar no CSS
-                acoesStatusHtml = `
-                    <span style="font-size: 11px; color: #dc2626; font-weight: bold; display: block;">Negado por: ${dados.responsavelNegativa || 'N/A'}</span>
-                    <small style="color: #64748b;" title="${dados.motivoNegativa || ''}">Motivo: ${dados.motivoNegativa || 'Não informado'}</small>
-                `;
-            } else if (statusAtual === 'Em Andamento' || dados.responsavelAceite) {
-                acoesStatusHtml = `
-                    <span style="font-size: 10px; color: #0369a1; display: block; margin-bottom: 2px;">Aceito por: ${dados.responsavelAceite}</span>
-                    <div style="display: flex; gap: 4px; margin-top: 2px;">
-                        <button class="btn-action btn-concluir" data-id="${id}" title="Marcar como Concluído" style="background-color: #16a34a; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">🏁 Concluir</button>
-                        <button class="btn-action btn-rejeitar" data-id="${id}" title="Rejeitar solicitação" style="background-color: ##fcf9f9; color: black; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">❌ Rejeitar</button>
-                    </div>
-                `;
+                acoesStatusHtml = `<span style="font-size:10px;color:#dc2626;font-weight:700;">Negado por: ${escapeHtml(dados.responsavelNegativa || 'N/A')}</span>`;
+            } else if (statusAtual === 'Em Andamento') {
+                acoesStatusHtml = `<button class="btn-action btn-concluir" data-id="${id}" title="Marcar como Concluído"><i class="fa-solid fa-check"></i></button><button class="btn-action btn-rejeitar" data-id="${id}" title="Rejeitar solicitação"><i class="fa-solid fa-xmark"></i></button>`;
             } else {
-                acoesStatusHtml = `
-                    <div style="display: flex; gap: 4px;">
-                        <button class="btn-action btn-aceitar" data-id="${id}" title="Aceitar solicitação">✅ Aceitar</button>
-                        <button class="btn-action btn-rejeitar" data-id="${id}" title="Rejeitar solicitação" style="background-color: ##fcf9f9; color: black; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">❌ Rejeitar </button>
-                    </div>
-                `;
+                acoesStatusHtml = `<button class="btn-action btn-aceitar" data-id="${id}" title="Aceitar solicitação"><i class="fa-solid fa-check"></i></button><button class="btn-action btn-rejeitar" data-id="${id}" title="Rejeitar solicitação"><i class="fa-solid fa-xmark"></i></button>`;
             }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${codigoProtocolo}</strong></td>
-                <td>${dataEnvioFormatada}</td>
-                <td>
-                    <strong>${nomeSolicitante}</strong><br>
-                    <small style="color:#0284c7; font-weight:bold;">${categoriaSolicitante} (${origemSolicitante})</small>
-                </td>
-                <td>
-                    <strong>${finalidadeTrabalho}</strong><br>
-                    <small style="color:#64748b">Orientador: ${nomeOrientador}</small>
-                </td>
-                <td><strong style="color: #0369a1;">${tecnicasFormatadas}</strong></td>
-                <td>${contatoEmail}<br><small>${contatoTelefone}</small></td>
-                <td>
-                    ${idAmostras}<br>
-                    <small style="color:#0284c7">${estadoFisicoAmostra} (${qtdAmostras} amostr.)</small>
-                </td>
-                <td><span class="tag-risco ${riscosFormatados.toLowerCase().includes('nenhum') ? 'nao' : 'sim'}">${riscosFormatados}</span></td>
-                <td><span class="tag-status ${corStatusClass}">${statusAtual}</span></td>
-                <td>${dataSugeridaFormatada}</td>
-                <td>${obsTexto}</td>
-                <td>
-                    <div class="acoes-grupo">
-                        ${acoesStatusHtml}
-                        <button class="btn-action btn-pdf" data-id="${id}" title="Gerar e Baixar PDF">📄</button>
-                        <button class="btn-action btn-delete" data-id="${id}" title="Excluir permanentemente">🗑️</button>
-                    </div>
-                </td>
-            `;
+                <td><strong>${escapeHtml(codigoProtocolo)}</strong></td>
+                <td>${escapeHtml(dataEnvioFormatada)}</td>
+                <td class="solicitante-cell"><strong>${escapeHtml(nomeSolicitante)}</strong><small>${escapeHtml(categoria)}${categoria && origem ? ' • ' : ''}${escapeHtml(origem)}</small></td>
+                <td class="tecnica-cell">${escapeHtml(tecnicasFormatadas)}</td>
+                <td class="delivery-cell">${escapeHtml(dataSugeridaFormatada)}</td>
+                <td class="status-cell"><span class="tag-status ${corStatusClass}">${escapeHtml(statusAtual)}</span></td>
+                <td><div class="acoes-grupo">
+                    <button class="btn-action btn-detalhes" data-id="${id}" title="Ver solicitação completa"><i class="fa-solid fa-eye"></i></button>
+                    ${acoesStatusHtml}
+                    <button class="btn-action btn-pdf" data-id="${id}" title="Gerar e Baixar PDF"><i class="fa-solid fa-file-pdf"></i></button>
+                    <button class="btn-action btn-delete" data-id="${id}" title="Excluir permanentemente"><i class="fa-solid fa-trash"></i></button>
+                </div></td>`;
             corpoTabela.appendChild(tr);
         });
-
         atribuirEventosBotoes();
     }
+
+    function valorOuNao(valor) { return valor === undefined || valor === null || valor === '' ? 'Não informado' : String(valor); }
+
+    function linhaDetalhe(label, valor) {
+        return `<div class="detalhe-item"><span class="detalhe-label">${escapeHtml(label)}</span><span class="detalhe-valor">${escapeHtml(valorOuNao(valor))}</span></div>`;
+    }
+
+    function abrirDetalhes(id) {
+        const dados = listaDadosCache.find(item => item.id === id);
+        if (!dados) { alert('Dados não encontrados.'); return; }
+        const protocolo = dados.codigoProtocolo || dados.codigo || 'N/A';
+        const status = dados.status || 'Pendente';
+        const riscos = dados.riscos || dados.grauRisco || 'Nenhum risco conhecido';
+        const tecnicas = dados.tecnicas || dados.equipamento || dados.tecnicaSelecionada || 'N/A';
+        const arquivoNome = dados.arquivoSegurancaNome;
+        const arquivoUrl = dados.arquivoSegurancaUrl;
+        const arquivoHtml = arquivoUrl ? `<a class="documento-link" href="${escapeHtml(arquivoUrl)}" target="_blank" rel="noopener">📎 ${escapeHtml(arquivoNome || 'Abrir documento de segurança')}</a>` : (arquivoNome ? `📎 ${escapeHtml(arquivoNome)} (link não disponível)` : 'Nenhum documento anexado');
+        const motivo = dados.motivoNegativa || 'Não se aplica';
+
+        document.getElementById('modalDetalhesTitulo').textContent = `Solicitação ${protocolo}`;
+        document.getElementById('modalDetalhesConteudo').innerHTML = `
+            <div class="detalhes-resumo"><div><div class="detalhes-protocolo">${escapeHtml(protocolo)}</div><small style="color:#64748b;">Enviada em ${escapeHtml(formatarData(dados.dataEnvio || dados.data || dados.criadoEm))}</small></div><span class="tag-status ${status === 'Concluído' ? 'concluido' : status === 'Negado' ? 'negado' : (status === 'Em Andamento' || dados.responsavelAceite) ? 'andamento' : 'pendente'}">${escapeHtml(status)}</span></div>
+            <div class="detalhes-secao"><h4>👤 Solicitante</h4><div class="detalhes-grid">${linhaDetalhe('Nome', dados.nome || dados.solicitante)}${linhaDetalhe('Categoria', dados.categoria || dados.tipoUsuario)}${linhaDetalhe('Origem / Instituição', dados.origem || dados.instituicao)}${linhaDetalhe('E-mail', dados.email)}${linhaDetalhe('Telefone', dados.telefone || dados.celular)}${linhaDetalhe('Campus / Local', dados.campus || dados.local)}</div></div>
+            <div class="detalhes-secao"><h4>📚 Trabalho / Finalidade</h4><div class="detalhes-grid">${linhaDetalhe('Finalidade', dados.finalidade)}${linhaDetalhe('Título / Trabalho', dados.tituloTrabalho || dados.titulo)}${linhaDetalhe('Orientador', dados.orientador || dados.professorOrientador)}${linhaDetalhe('Fomento / Projeto', dados.fomento || dados.projeto)}</div></div>
+            <div class="detalhes-secao"><h4>🔬 Técnica e Amostras</h4><div class="detalhes-grid">${linhaDetalhe('Técnica / Equipamento', tecnicas)}${linhaDetalhe('Identificação das amostras', dados.identificacaoAmostras || dados.amostrasDescricao || dados.descricaoAmostras)}${linhaDetalhe('Quantidade', dados.numAmostras || dados.quantidadeAmostras || dados.qtdAmostras)}${linhaDetalhe('Estado físico', dados.estadoFisico || dados.naturezaAmostra)}</div></div>
+            <div class="detalhes-secao"><h4>⚠️ Riscos e Segurança</h4><div class="detalhes-grid">${linhaDetalhe('Riscos declarados', riscos)}${linhaDetalhe('Declaração de dados', dados.declaraDados ? 'Sim' : 'Não')}<div class="detalhe-item" style="grid-column:1/-1;"><span class="detalhe-label">Documento de segurança</span><span class="detalhe-valor">${arquivoUrl ? `<a class="documento-link" href="${escapeHtml(arquivoUrl)}" target="_blank" rel="noopener">📎 ${escapeHtml(arquivoNome || 'Abrir documento de segurança')}</a>` : (arquivoNome ? `📎 ${escapeHtml(arquivoNome)} (link não disponível)` : 'Nenhum documento anexado')}</span></div></div></div>
+            <div class="detalhes-secao"><h4>⚙️ Condições de Análise</h4><div class="detalhes-grid">${linhaDetalhe('Condições', dados.condicoes || dados.condicao || 'Padrão')}${linhaDetalhe('DRX', dados.condDrx)}${linhaDetalhe('FTIR', dados.condFtir)}${linhaDetalhe('TPD/TPR', dados.condTpdsc)}${linhaDetalhe('Sputtering', dados.condSputtering)}</div></div>
+            <div class="detalhes-secao"><h4>📅 Entrega e Observações</h4><div class="detalhes-grid">${linhaDetalhe('Data sugerida', formatarDataSugerida(dados.dataSugerida || dados.previsaoEntrega))}${linhaDetalhe('Responsável pelo aceite', dados.responsavelAceite)}${linhaDetalhe('Data do aceite', formatarData(dados.dataAceite))}${linhaDetalhe('Responsável pela conclusão', dados.responsavelConclusao)}${linhaDetalhe('Data da conclusão', formatarData(dados.dataConclusao))}${linhaDetalhe('Responsável pela negativa', dados.responsavelNegativa)}${linhaDetalhe('Motivo da negativa', motivo)}</div><div class="detalhes-texto"><strong>Observações:</strong><br>${escapeHtml(valorOuNao(dados.observacoes || dados.obs))}</div></div>
+            <div class="modal-acoes"><button class="btn btn-fechar-modal" id="btnFecharDetalhes2">Fechar</button><button class="btn btn-print" id="btnPdfModal">📄 Baixar PDF</button></div>`;
+
+        document.getElementById('modalDetalhes').style.display = 'block';
+        document.getElementById('btnFecharDetalhes2').addEventListener('click', fecharDetalhes);
+        document.getElementById('btnPdfModal').addEventListener('click', () => gerarPdfAdmin(id));
+    }
+
+    function fecharDetalhes() { document.getElementById('modalDetalhes').style.display = 'none'; }
 
     function gerarPdfAdmin(id) {
     const dados = listaDadosCache.find(item => item.id === id);
@@ -983,17 +1109,27 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
 }
 
     function atribuirEventosBotoes() {
+        document.querySelectorAll('.btn-detalhes').forEach(button => {
+            button.addEventListener('click', (e) => abrirDetalhes(e.currentTarget.getAttribute('data-id')));
+        });
         document.querySelectorAll('.btn-aceitar').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const idDoc = e.currentTarget.getAttribute('data-id');
                 if (confirm("Deseja aceitar e assumir esta solicitação?")) {
                     try {
                         const docRef = doc(db, "solicitacoes", idDoc);
+                        const dadosSolicitacao = listaDadosCache.find(item => item.id === idDoc);
+
                         await updateDoc(docRef, { 
                             status: "Em Andamento",
                             responsavelAceite: nomeResponsavelLogado || "Administrador",
                             dataAceite: new Date().toISOString()
                         });
+
+                        if (dadosSolicitacao) {
+                            await enviarEmailAtualizacaoStatus(dadosSolicitacao, "Em Andamento");
+                        }
+
                         carregarSolicitacoes();
                     } catch (error) {
                         console.error("Erro ao aceitar:", error);
@@ -1009,11 +1145,18 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
                 if (confirm("Deseja marcar esta solicitação como Concluída?")) {
                     try {
                         const docRef = doc(db, "solicitacoes", idDoc);
+                        const dadosSolicitacao = listaDadosCache.find(item => item.id === idDoc);
+
                         await updateDoc(docRef, { 
                             status: "Concluído",
                             responsavelConclusao: nomeResponsavelLogado || "Administrador",
                             dataConclusao: new Date().toISOString()
                         });
+
+                        if (dadosSolicitacao) {
+                            await enviarEmailAtualizacaoStatus(dadosSolicitacao, "Concluído");
+                        }
+
                         carregarSolicitacoes();
                     } catch (error) {
                         console.error("Erro ao concluir:", error);
@@ -1075,6 +1218,10 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         });
     }
 
+    document.getElementById('btnFecharDetalhes').addEventListener('click', fecharDetalhes);
+    document.getElementById('modalDetalhes').addEventListener('click', (e) => { if (e.target.id === 'modalDetalhes') fecharDetalhes(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharDetalhes(); });
+
     btnSalvarLimite.addEventListener('click', async () => {
         const novoLimite = parseInt(inputLimiteMensal.value);
         if (isNaN(novoLimite) || novoLimite <= 0) {
@@ -1096,6 +1243,11 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
     filtroBusca.addEventListener('input', () => renderizarTabela(listaDadosCache));
     filtroEquipamento.addEventListener('change', () => renderizarTabela(listaDadosCache));
     filtroStatus.addEventListener('change', () => renderizarTabela(listaDadosCache));
+
+    document.getElementById('cardPendenteBox').addEventListener('click', () => {
+        filtroStatus.value = 'Pendente';
+        renderizarTabela(listaDadosCache);
+    });
 
     document.getElementById('btnExportarCsv').addEventListener('click', () => {
         if (listaDadosCache.length === 0) {
