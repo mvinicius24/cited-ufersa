@@ -1146,7 +1146,10 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
                     try {
                         const docRef = doc(db, "solicitacoes", idDoc);
                         const dadosSolicitacao = listaDadosCache.find(item => item.id === idDoc);
-
+                        
+                        console.log("ID do documento:", idDoc);
+                        console.log("Dados encontrados para envio:", dadosSolicitacao);
+                        
                         await updateDoc(docRef, { 
                             status: "Concluído",
                             responsavelConclusao: nomeResponsavelLogado || "Administrador",
