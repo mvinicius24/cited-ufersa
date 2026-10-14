@@ -317,28 +317,21 @@
         <div class="form-group">
             <label>Selecione a(s) técnica(s) desejada(s) *</label>
             <div class="checkbox-group">
-                <!-- ATIVAR QUANDO ESTIVER FUNCIONANDO-->
-                <!--<label class="checkbox-option">
-                    <input type="checkbox" name="tecnica" value="Difração de Raios X — DRX">
-                    <div><strong>Difração de Raios X — DRX</strong><br><span style="font-size:12px; color:#64748b;">Análise estrutural de materiais cristalinos, identificação de fases e polimorfos.</span></div>
-                </label>-->
-             <!-- DESATIVAR QUANDO ESTIVER FUNCIONANDO-->
-            <label class="checkbox-option" style="opacity: 0.6; cursor: not-allowed;">
-                    <input type="checkbox" name="tecnica" value="Difração de Raios X — DRX" disabled>
-                    <div><strong style="color: #94a3b8;">Difração de Raios X — DRX (Inoperante no momento)</strong><br><span style="font-size:12px; color:#94a3b8;">Análise estrutural de materiais cristalinos, identificação de fases e polimorfos.</span></div>
-                </label>  
-
-                <label class="checkbox-option">
-                    <input type="checkbox" name="tecnica" value="FTIR (Nicolet iS50)">
-                    <div><strong>Espectroscopia no Infravermelho — FTIR (Nicolet iS50 — ATR, NIR, ESP)</strong><br><span style="font-size:12px; color:#64748b;">Caracterização de grupos funcionais e ligações químicas.</span></div>
+                <label class="checkbox-option" data-equipamento="drx">
+                    <input type="checkbox" name="tecnica" value="Difração de Raios X — DRX" data-equipamento="drx">
+                    <div><strong>Difração de Raios X — DRX</strong><br><span style="font-size:12px; color:#64748b;">Análise estrutural de materiais cristalinos, identificação de fases e polimorfos.</span><span class="status-equipamento" style="display:none; font-size:12px; color:#b91c1c;">Indisponível no momento.</span></div>
                 </label>
-                <label class="checkbox-option">
-                    <input type="checkbox" name="tecnica" value="TG/DSC (STA Jupiter 449)">
-                    <div><strong>Análise Térmica Simultânea — TG/DSC (STA Jupiter 449)</strong><br><span style="font-size:12px; color:#64748b;">Avaliação de perdas de massa, estabilidade térmica e eventos térmicos.</span></div>
+                <label class="checkbox-option" data-equipamento="ftir">
+                    <input type="checkbox" name="tecnica" value="FTIR (Nicolet iS50)" data-equipamento="ftir">
+                    <div><strong>Espectroscopia no Infravermelho — FTIR (Nicolet iS50 — ATR, NIR, ESP)</strong><br><span style="font-size:12px; color:#64748b;">Caracterização de grupos funcionais e ligações químicas.</span><span class="status-equipamento" style="display:none; font-size:12px; color:#b91c1c;">Indisponível no momento.</span></div>
                 </label>
-                <label class="checkbox-option">
-                    <input type="checkbox" name="tecnica" value="SPUTTERING ">
-                    <div><strong>Sputtering</strong><br><span style="font-size:12px; color:#64748b;">Texto descritivo sobre o equipamento.</span></div>
+                <label class="checkbox-option" data-equipamento="tg-dsc">
+                    <input type="checkbox" name="tecnica" value="TG/DSC (STA Jupiter 449)" data-equipamento="tg-dsc">
+                    <div><strong>Análise Térmica Simultânea — TG/DSC (STA Jupiter 449)</strong><br><span style="font-size:12px; color:#64748b;">Avaliação de perdas de massa, estabilidade térmica e eventos térmicos.</span><span class="status-equipamento" style="display:none; font-size:12px; color:#b91c1c;">Indisponível no momento.</span></div>
+                </label>
+                <label class="checkbox-option" data-equipamento="sputtering">
+                    <input type="checkbox" name="tecnica" value="SPUTTERING " data-equipamento="sputtering">
+                    <div><strong>Sputtering</strong><br><span style="font-size:12px; color:#64748b;">Texto descritivo sobre o equipamento.</span><span class="status-equipamento" style="display:none; font-size:12px; color:#b91c1c;">Indisponível no momento.</span></div>
                 </label>
             </div>
         </div>
@@ -532,6 +525,46 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const form = document.getElementById('lsrxForm');
+
+  // --- DISPONIBILIDADE DOS EQUIPAMENTOS (Firestore) ---
+  const equipamentosPadrao = {
+    'drx': false,
+    'ftir': true,
+    'tg-dsc': true,
+    'sputtering': true
+  };
+
+  function aplicarDisponibilidadeEquipamento(chave, ativo) {
+    const checkbox = document.querySelector(`input[name="tecnica"][data-equipamento="${chave}"]`);
+    if (!checkbox) return;
+    const rotulo = checkbox.closest('.checkbox-option');
+    const aviso = rotulo ? rotulo.querySelector('.status-equipamento') : null;
+    checkbox.disabled = !ativo;
+    if (!ativo) checkbox.checked = false;
+    if (rotulo) {
+      rotulo.style.opacity = ativo ? '1' : '0.6';
+      rotulo.style.cursor = ativo ? 'pointer' : 'not-allowed';
+    }
+    if (aviso) aviso.style.display = ativo ? 'none' : 'inline';
+  }
+
+  async function carregarDisponibilidadeEquipamentos() {
+    Object.entries(equipamentosPadrao).forEach(([nome, ativo]) => aplicarDisponibilidadeEquipamento(nome, ativo));
+    try {
+      const snapshotEquipamentos = await getDocs(collection(db, 'equipamentos'));
+      snapshotEquipamentos.forEach((documento) => {
+        const equipamento = documento.data();
+        const nome = String(equipamento.nome || documento.id).trim().toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(equipamentosPadrao, nome)) {
+          aplicarDisponibilidadeEquipamento(nome, equipamento.ativo === true);
+        }
+      });
+    } catch (erro) {
+      console.error('Não foi possível carregar a disponibilidade dos equipamentos:', erro);
+    }
+  }
+
+  carregarDisponibilidadeEquipamentos();
 
   // URL do Google Apps Script responsável por salvar os arquivos no Google Drive.
   // SUBSTITUA pelo URL da implantação do seu Apps Script.
