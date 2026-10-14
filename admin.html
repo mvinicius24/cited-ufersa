@@ -49,8 +49,52 @@
 
         .actions-menu {
             display: flex;
+            align-items: center;
             gap: 8px;
             flex-wrap: wrap;
+            justify-content: flex-end;
+            flex: 1;
+        }
+
+        .limite-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex-wrap: wrap;
+            padding: 7px 9px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .limite-toolbar label {
+            color: #334155;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .limite-toolbar input {
+            width: 70px;
+            min-width: 65px;
+            padding: 6px 7px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .limite-toolbar #statusContadorMes {
+            color: #475569;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        #btnToggleEquipamentos { background-color: #475569; }
+        #btnToggleEquipamentos:hover { background-color: #334155; }
+
+        @media (max-width: 900px) {
+            .actions-menu { justify-content: flex-start; }
+            .limite-toolbar { width: 100%; }
         }
 
         .btn {
@@ -492,20 +536,27 @@
         </div>
         <div class="actions-menu">
             <button class="btn btn-csv" id="btnExportarCsv"><i class="fa-solid fa-file-csv"></i><span>CSV</span></button>
+            <button class="btn" id="btnToggleEquipamentos" type="button" aria-expanded="false" aria-controls="painelEquipamentos"><i class="fa-solid fa-screwdriver-wrench"></i><span>Equipamentos</span></button>
             <button class="btn btn-refresh" id="btnRecarregar"><i class="fa-solid fa-rotate"></i><span>Atualizar</span></button>
             <button class="btn btn-print" id="btnImprimir"><i class="fa-solid fa-print"></i><span>Imprimir</span></button>
+            <div class="limite-toolbar" aria-label="Controle de limite mensal">
+                <label for="inputLimiteMensal">Limite mensal:</label>
+                <input type="number" id="inputLimiteMensal" min="1" placeholder="Ex: 50">
+                <button class="btn btn-config" id="btnSalvarLimite">Salvar</button>
+                <span id="statusContadorMes">Envios no mês: Carregando...</span>
+            </div>
         </div>
     </header>
 
-    <!-- Painel de Controle de Limite Mensal -->
-    <div class="config-panel">
-        <div class="config-group">
-            <label for="inputLimiteMensal"><i class="fa-solid fa-sliders"></i> Limite Máximo de Envios no Mês:</label>
-            <input type="number" id="inputLimiteMensal" min="1" placeholder="Ex: 50">
-            <button class="btn btn-config" id="btnSalvarLimite">Salvar Limite</button>
-        </div>
-        <div id="statusContadorMes" style="font-size: 13px; font-weight: 600; color: #475569;">
-            Envios no mês atual: Carregando...
+    <!-- Gerenciamento de disponibilidade dos equipamentos (abre somente pelo botão) -->
+    <div class="config-panel" id="painelEquipamentos" style="display:none;">
+        <div style="width:100%;">
+            <h3 style="margin:0 0 6px; color:#1e293b; font-size:16px;"><i class="fa-solid fa-screwdriver-wrench"></i> Disponibilidade dos equipamentos</h3>
+            <p style="margin:0 0 12px; color:#64748b; font-size:13px;">Ative ou desative os equipamentos disponíveis para novas solicitações.</p>
+            <div id="listaEquipamentosAdmin" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:10px;">
+                <div style="color:#64748b; font-size:13px;">Carregando equipamentos...</div>
+            </div>
+            <div id="mensagemEquipamentosAdmin" role="status" style="margin-top:10px; font-size:13px;"></div>
         </div>
     </div>
 
@@ -616,6 +667,7 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
                 authOverlay.style.display = 'none';
                 adminContainer.style.display = 'block';
                 carregarSolicitacoes();
+                carregarEquipamentosAdmin();
             } else {
                 authErrorMsg.innerText = "Senha inválida.";
                 authErrorMsg.style.display = 'block';
@@ -680,6 +732,94 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
             console.log(`Solicitação ${dados.codigoProtocolo || dados.codigo || ''}: aviso de ${novoStatus} enviado.`);
         } catch (erro) {
             console.error(`Erro ao solicitar envio do aviso de ${novoStatus}:`, erro);
+        }
+    }
+
+    // --- GERENCIAMENTO DE DISPONIBILIDADE DOS EQUIPAMENTOS ---
+    const listaEquipamentosAdmin = document.getElementById('listaEquipamentosAdmin');
+    const mensagemEquipamentosAdmin = document.getElementById('mensagemEquipamentosAdmin');
+
+    const btnToggleEquipamentos = document.getElementById('btnToggleEquipamentos');
+    const painelEquipamentos = document.getElementById('painelEquipamentos');
+
+    btnToggleEquipamentos.addEventListener('click', () => {
+        const estaVisivel = painelEquipamentos.style.display !== 'none';
+        painelEquipamentos.style.display = estaVisivel ? 'none' : 'flex';
+        btnToggleEquipamentos.setAttribute('aria-expanded', String(!estaVisivel));
+        btnToggleEquipamentos.innerHTML = estaVisivel
+            ? '<i class="fa-solid fa-screwdriver-wrench"></i><span>Equipamentos</span>'
+            : '<i class="fa-solid fa-eye-slash"></i><span>Ocultar equipamentos</span>';
+    });
+
+    const nomesAmigaveisEquipamentos = {
+        'drx': 'Difração de Raios X — DRX',
+        'ftir': 'FTIR (Nicolet iS50)',
+        'tg-dsc': 'TG/DSC (STA Jupiter 449)',
+        'sputtering': 'Sputtering'
+    };
+
+    async function carregarEquipamentosAdmin() {
+        listaEquipamentosAdmin.innerHTML = '<div style="color:#64748b;font-size:13px;">Carregando equipamentos...</div>';
+        mensagemEquipamentosAdmin.textContent = '';
+        try {
+            const snapshot = await getDocs(collection(db, 'equipamentos'));
+            if (snapshot.empty) {
+                listaEquipamentosAdmin.innerHTML = '<div style="color:#b91c1c;font-size:13px;">Nenhum equipamento encontrado na coleção "equipamentos".</div>';
+                return;
+            }
+
+            const equipamentos = snapshot.docs.map(documento => ({ id: documento.id, ...documento.data() }));
+            equipamentos.sort((a, b) => {
+                const ordemA = Number(a.ordem) || 0;
+                const ordemB = Number(b.ordem) || 0;
+                return ordemA - ordemB || String(a.nome || '').localeCompare(String(b.nome || ''));
+            });
+
+            listaEquipamentosAdmin.innerHTML = '';
+            equipamentos.forEach(equipamento => {
+                const chave = String(equipamento.nome || equipamento.id).trim().toLowerCase();
+                const nomeExibicao = nomesAmigaveisEquipamentos[chave] || equipamento.nome || equipamento.id;
+                const ativo = equipamento.ativo === true;
+                const item = document.createElement('div');
+                item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;';
+
+                const info = document.createElement('div');
+                info.style.cssText = 'min-width:0;';
+                const titulo = document.createElement('div');
+                titulo.textContent = nomeExibicao;
+                titulo.style.cssText = 'font-size:13px;font-weight:600;color:#334155;';
+                const estado = document.createElement('div');
+                estado.textContent = ativo ? 'Ativo para solicitações' : 'Indisponível para solicitações';
+                estado.style.cssText = `font-size:12px;margin-top:4px;color:${ativo ? '#15803d' : '#b91c1c'};`;
+                info.append(titulo, estado);
+
+                const botao = document.createElement('button');
+                botao.type = 'button';
+                botao.className = 'btn ' + (ativo ? 'btn-config' : 'btn-refresh');
+                botao.textContent = ativo ? 'Desativar' : 'Ativar';
+                botao.style.cssText = 'white-space:nowrap;';
+                botao.addEventListener('click', async () => {
+                    botao.disabled = true;
+                    botao.textContent = 'Salvando...';
+                    try {
+                        await updateDoc(doc(db, 'equipamentos', equipamento.id), { ativo: !ativo });
+                        await carregarEquipamentosAdmin();
+                        mensagemEquipamentosAdmin.style.color = '#15803d';
+                        mensagemEquipamentosAdmin.textContent = `Disponibilidade de "${nomeExibicao}" atualizada.`;
+                    } catch (erro) {
+                        console.error('Erro ao atualizar equipamento:', erro);
+                        botao.disabled = false;
+                        botao.textContent = ativo ? 'Desativar' : 'Ativar';
+                        mensagemEquipamentosAdmin.style.color = '#b91c1c';
+                        mensagemEquipamentosAdmin.textContent = 'Não foi possível atualizar. Verifique a conexão e as regras do Firestore.';
+                    }
+                });
+                item.append(info, botao);
+                listaEquipamentosAdmin.appendChild(item);
+            });
+        } catch (erro) {
+            console.error('Erro ao carregar equipamentos:', erro);
+            listaEquipamentosAdmin.innerHTML = '<div style="color:#b91c1c;font-size:13px;">Erro ao carregar equipamentos. Verifique as regras do Firestore.</div>';
         }
     }
 
