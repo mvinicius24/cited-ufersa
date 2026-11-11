@@ -1399,7 +1399,7 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         }
 
         let csvContent = "data:text/csv;charset=utf-8,sep=;\r\n";
-        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;nomeOutraInst;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao;MotivoNegativa\r\n";
+        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;OutraInst;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao;MotivoNegativa\r\n";
 
         listaDadosCache.forEach(item => {
             const codigo = item.codigoProtocolo || item.codigo || '';
@@ -1407,6 +1407,7 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
             const nome = `"${(item.nome || item.solicitante || '').replace(/"/g, '""')}"`;
             const categoria = `"${(item.categoria || '').replace(/"/g, '""')}"`;
             const origem = `"${(item.origem || '').replace(/"/g, '""')}"`;
+            const nomeOutraInst = `"${(item.nomeOutraInst || '').replace(/"/g, '""')}"`;
             const finalidade = `"${(item.finalidade || item.tituloTrabalho || '').replace(/"/g, '""')}"`;
             const orientador = `"${(item.orientador || item.professorOrientador || '').replace(/"/g, '""')}"`;
             const tecnicas = `"${(item.tecnicas || item.equipamento || '').replace(/"/g, '""')}"`;
