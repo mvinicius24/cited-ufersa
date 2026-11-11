@@ -1392,45 +1392,82 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         renderizarTabela(listaDadosCache);
     });
 
-    document.getElementById('btnExportarCsv').addEventListener('click', () => {
+   document.getElementById('btnExportarCsv').addEventListener('click', () => {
         if (listaDadosCache.length === 0) {
             alert("Não há dados para exportar.");
             return;
         }
 
         let csvContent = "data:text/csv;charset=utf-8,sep=;\r\n";
-        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;OutraInst;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao;MotivoNegativa\r\n";
+        
+        // Cabeçalho completo com todas as informações da solicitação
+        csvContent += "CodigoProtocolo;DataEnvio;Nome;Email;Telefone;Categoria;Origem;CampusUfersa;LabUfersa;NomeOutraInst;LabOutraInst;NomeEmpresa;NomeOutraOrg;Orientador;Finalidade;TituloTrabalho;ProjetoFomento;OutraFinalidade;Tecnicas;NumAmostras;IdentificacaoAmostras;EstadoFisico;Composicao;DescricaoAmostra;ObjetivoAnalise;Riscos;DetalhesRisco;TipoCondicao;CondDrx;CondFtir;CondTpdsc;CondSputtering;DataSugerida;Observacoes;DeclaraDados;DeclaraAgradecimento;Status;ResponsavelAceite;DataAceite;ResponsavelConclusao;DataConclusao;ResponsavelNegativa;MotivoNegativa\r\n";
 
         listaDadosCache.forEach(item => {
-            const codigo = item.codigoProtocolo || item.codigo || '';
-            const dataEnvio = item.dataEnvio ? new Date(item.dataEnvio).toLocaleDateString('pt-BR') : '';
-            const nome = `"${(item.nome || item.solicitante || '').replace(/"/g, '""')}"`;
-            const categoria = `"${(item.categoria || '').replace(/"/g, '""')}"`;
-            const origem = `"${(item.origem || '').replace(/"/g, '""')}"`;
-            const nomeOutraInst = `"${(item.nomeOutraInst || '').replace(/"/g, '""')}"`;
-            const finalidade = `"${(item.finalidade || item.tituloTrabalho || '').replace(/"/g, '""')}"`;
-            const orientador = `"${(item.orientador || item.professorOrientador || '').replace(/"/g, '""')}"`;
-            const tecnicas = `"${(item.tecnicas || item.equipamento || '').replace(/"/g, '""')}"`;
-            const email = item.email || '';
-            const telefone = item.telefone || '';
-            const numAmostras = item.numAmostras || item.quantidadeAmostras || '';
-            const estadoFisico = item.estadoFisico || '';
-            const riscos = `"${(item.riscos || '').replace(/"/g, '""')}"`;
-            const status = item.status || 'Pendente';
-            const dataSugerida = item.dataSugerida || '';
-            const observacoes = `"${(item.observacoes || '').replace(/"/g, '""')}"`;
-            const responsavelAceite = `"${(item.responsavelAceite || '').replace(/"/g, '""')}"`;
-            const responsavelConclusao = `"${(item.responsavelConclusao || '').replace(/"/g, '""')}"`;
-            const motivoNegativa = `"${(item.motivoNegativa || '').replace(/"/g, '""')}"`;
+            const formatarCampo = (valor) => `"${String(valor || '').replace(/"/g, '""')}"`;
 
-            const linha = [codigo, dataEnvio, nome, categoria, origem, finalidade, orientador, tecnicas, email, telefone, numAmostras, estadoFisico, riscos, status, dataSugerida, observacoes, responsavelAceite, responsavelConclusao, motivoNegativa].join(";");
+            const codigo = item.codigoProtocolo || item.codigo || '';
+            const dataEnvio = item.dataEnvio ? new Date(item.dataEnvio).toLocaleString('pt-BR') : '';
+            const nome = formatarCampo(item.nome || item.solicitante);
+            const email = formatarCampo(item.email);
+            const telefone = formatarCampo(item.telefone || item.celular);
+            const categoria = formatarCampo(item.categoria || item.tipoUsuario);
+            const origem = formatarCampo(item.origem);
+            const campusUfersa = formatarCampo(item.campusUfersa);
+            const labUfersa = formatarCampo(item.labUfersa);
+            const nomeOutraInst = formatarCampo(item.nomeOutraInst);
+            const labOutraInst = formatarCampo(item.labOutraInst);
+            const nomeEmpresa = formatarCampo(item.nomeEmpresa);
+            const nomeOutraOrg = formatarCampo(item.nomeOutraOrg);
+            const orientador = formatarCampo(item.orientador || item.professorOrientador);
+            const finalidade = formatarCampo(item.finalidade);
+            const tituloTrabalho = formatarCampo(item.tituloTrabalho || item.titulo);
+            const projetoFomento = formatarCampo(item.projetoFomento || item.fomento);
+            const outraFinalidade = formatarCampo(item.outraFinalidade);
+            const tecnicas = formatarCampo(item.tecnicas || item.equipamento || item.tecnicaSelecionada);
+            const numAmostras = formatarCampo(item.numAmostras || item.quantidadeAmostras);
+            const identificacaoAmostras = formatarCampo(item.identificacaoAmostras || item.amostrasDescricao);
+            const estadoFisico = formatarCampo(item.estadoFisico || item.naturezaAmostra);
+            const composicao = formatarCampo(item.composicao);
+            const descricaoAmostra = formatarCampo(item.descricaoAmostra);
+            const objetivoAnalise = formatarCampo(item.objetivoAnalise);
+            const riscos = formatarCampo(item.riscos || item.grauRisco);
+            const detalhesRisco = formatarCampo(item.detalhesRisco);
+            const tipoCondicao = formatarCampo(item.tipoCondicao);
+            const condDrx = formatarCampo(item.condDrx);
+            const condFtir = formatarCampo(item.condFtir);
+            const condTpdsc = formatarCampo(item.condTpdsc);
+            const condSputtering = formatarCampo(item.condSputtering);
+            const dataSugerida = formatarCampo(item.dataSugerida || item.previsaoEntrega);
+            const observacoes = formatarCampo(item.observacoes || item.obs);
+            const declaraDados = item.declaraDados ? 'Sim' : 'Não';
+            const declaraAgradecimento = item.declaraAgradecimento ? 'Sim' : 'Não';
+            const status = formatarCampo(item.status || 'Pendente');
+            const responsavelAceite = formatarCampo(item.responsavelAceite);
+            const dataAceite = item.dataAceite ? new Date(item.dataAceite).toLocaleString('pt-BR') : '';
+            const responsavelConclusao = formatarCampo(item.responsavelConclusao);
+            const dataConclusao = item.dataConclusao ? new Date(item.dataConclusao).toLocaleString('pt-BR') : '';
+            const responsavelNegativa = formatarCampo(item.responsavelNegativa);
+            const motivoNegativa = formatarCampo(item.motivoNegativa);
+
+            const linha = [
+                codigo, dataEnvio, nome, email, telefone, categoria, origem, 
+                campusUfersa, labUfersa, nomeOutraInst, labOutraInst, nomeEmpresa, nomeOutraOrg, 
+                orientador, finalidade, tituloTrabalho, projetoFomento, outraFinalidade, 
+                tecnicas, numAmostras, identificacaoAmostras, estadoFisico, composicao, 
+                descricaoAmostra, objetivoAnalise, riscos, detalhesRisco, tipoCondicao, 
+                condDrx, condFtir, condTpdsc, condSputtering, dataSugerida, observacoes, 
+                declaraDados, declaraAgradecimento, status, responsavelAceite, dataAceite, 
+                responsavelConclusao, dataConclusao, responsavelNegativa, motivoNegativa
+            ].join(";");
+
             csvContent += linha + "\r\n";
         });
 
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `solicitacoes_lsrx_${new Date().toISOString().slice(0,10)}.csv`);
+        link.setAttribute("download", `solicitacoes_lsrx_completo_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
