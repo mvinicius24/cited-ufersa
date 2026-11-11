@@ -1399,7 +1399,7 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         }
 
         let csvContent = "data:text/csv;charset=utf-8,sep=;\r\n";
-        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao;MotivoNegativa\r\n";
+        csvContent += "CodigoProtocolo;DataSolicitacao;Nome;Categoria;Origem;nomeOutraInst;Finalidade;Orientador;Tecnicas;Email;Telefone;NumAmostras;EstadoFisico;Riscos;Status;DataSugerida;Observacoes;ResponsavelAceite;ResponsavelConclusao;MotivoNegativa\r\n";
 
         listaDadosCache.forEach(item => {
             const codigo = item.codigoProtocolo || item.codigo || '';
