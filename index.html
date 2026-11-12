@@ -412,6 +412,12 @@
             <textarea id="detalhes-risco" rows="3" placeholder="Descreva os cuidados de manuseio, EPIs necessários, etc."></textarea>
         </div>
 
+        <div class="form-group">
+            <label for="documento-seguranca">FISPQ/FDS ou documentação de segurança</label>
+            <input type="file" id="documento-seguranca" name="documento-seguranca" accept=".pdf,.doc,.docx,.jpg,.png" style="padding: 9px; background-color: #f8fafc;">
+            <small style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">Formatos aceitos: PDF, Word ou Imagem (opcional).</small>
+        </div>
+
         <!-- 7. Condições da Análise -->
         <div class="section-title">7. Condições da Análise</div>
         <div class="form-group">
@@ -560,9 +566,9 @@
 
   carregarDisponibilidadeEquipamentos();
 
-  // URL do Google Apps Script responsável pelo envio do PDF por e-mail.
+  // URL do Google Apps Script responsável por salvar os arquivos no Google Drive.
   // SUBSTITUA pelo URL da implantação do seu Apps Script.
-  const GOOGLE_DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbwA-mZl9LpikKjjoaK4GCKxvkAgwqF7JxgfOolSd3-FBrvYHKPQpGpX9DvbJ_oqe_Wp/exec;
+  const GOOGLE_DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbyzJsZ3poYkCJrRIwcR8-aTMbl3s2IMKDUuCGCjBYOZM-3RSF3F6XPvqjgqMLhFJSIj/exec";
 console.log("URL DO APPS SCRIPT:", GOOGLE_DRIVE_UPLOAD_URL);
 
   
@@ -745,6 +751,60 @@ async function gerarCodigoLSRX() {
   // Monta com o MÊS ATUAL, mas com a sequência contínua
   return `${prefixoAno}${mes}${numeroFormatado}`; // Ex: "LSRX26100008"
 }
+  // --- 6. UPLOAD DO DOCUMENTO DE SEGURANÇA PARA O GOOGLE DRIVE ---
+async function enviarArquivoParaGoogleDrive(arquivo, codigoProtocolo, firestoreDocId) {
+
+ console.log("🚨 UPLOAD FISPQ CHAMADO:", {
+        arquivo: arquivo.name,
+        protocolo: codigoProtocolo,
+        firestoreDocId: firestoreDocId,
+        hora: new Date().toISOString()
+    });
+
+    if (!arquivo) return null;
+
+    if (!GOOGLE_DRIVE_UPLOAD_URL) {
+        throw new Error("O URL do Google Apps Script não foi configurado.");
+    }
+
+    const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            const resultado = reader.result;
+            resolve(resultado.split(',')[1]);
+        };
+
+        reader.onerror = () => {
+            reject(new Error("Não foi possível ler o arquivo selecionado."));
+        };
+
+        reader.readAsDataURL(arquivo);
+    });
+
+    await fetch(GOOGLE_DRIVE_UPLOAD_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+            fileName: arquivo.name,
+            mimeType: arquivo.type || "application/octet-stream",
+            fileData: base64,
+            codigoProtocolo: codigoProtocolo,
+            firestoreDocId: firestoreDocId || ''
+        })
+    });
+
+    return {
+        success: true,
+        fileName: arquivo.name,
+        fileId: null,
+        fileUrl: null
+    };
+}
+
 async function testarEnvioPdfEmail() {
 
   const docPdf = new window.jspdf.jsPDF();
@@ -1423,8 +1483,15 @@ async function gerarPdfParaEmail(dados) {
       // Gera o código e salva
       const codigoGerado = await gerarCodigoLSRX();
 
-      // Os dados da solicitação são gravados no Firestore, sem anexos de segurança.
-      btnEnviar.innerText = "Salvando solicitação...";
+      // Documento opcional. Os dados da solicitação são gravados primeiro no Firestore.
+      // Depois o Apps Script salva o arquivo no Drive e atualiza este mesmo documento
+      // com nome, ID e URL do arquivo.
+      const arquivoSeguranca = document.getElementById('documento-seguranca').files[0];
+      btnEnviar.innerText = arquivoSeguranca
+        ? "Preparando solicitação..."
+        : "Salvando solicitação...";
+
+      const resultadoArquivo = null;
 
       const origemSelecionada = document.getElementById('origem').value;
       const tipoCondicaoEl = document.querySelector('input[name="tipo_condicao"]:checked');
@@ -1485,6 +1552,11 @@ async function gerarPdfParaEmail(dados) {
         dataSugerida: document.getElementById('data-sugerida').value || '',
         observacoes: document.getElementById('observacoes').value || '',
 
+        // --- Documento de segurança no Google Drive ---
+        arquivoSegurancaNome: '',
+        arquivoSegurancaUrl: '',
+        arquivoSegurancaId: '',
+
         // --- 9 & 10. Declarações ---
         declaraDados: document.getElementById('declara-dados').checked,
         declaraAgradecimento: document.getElementById('declara-agradecimento').checked
@@ -1523,7 +1595,22 @@ btnEnviar.innerText = "ENVIAR SOLICITAÇÃO DE ANÁLISE";
   try {
 
     // ------------------------------------------
-    // 1. GERA O PDF
+    // 1. ENVIA FISPQ PARA O GOOGLE DRIVE
+    // ------------------------------------------
+
+    if (arquivoSeguranca) {
+
+      await enviarArquivoParaGoogleDrive(
+        arquivoSeguranca,
+        codigoGerado,
+        docRef.id
+      );
+
+    }
+
+
+    // ------------------------------------------
+    // 2. GERA O PDF
     // ------------------------------------------
 
     const resultadoPdf =
@@ -1531,7 +1618,7 @@ btnEnviar.innerText = "ENVIAR SOLICITAÇÃO DE ANÁLISE";
 
 
     // ------------------------------------------
-    // 2. ENVIA O PDF POR E-MAIL
+    // 3. ENVIA O PDF POR E-MAIL
     // ------------------------------------------
 
     await fetch(GOOGLE_DRIVE_UPLOAD_URL, {
