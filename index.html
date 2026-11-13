@@ -181,15 +181,154 @@
         button:hover {
             background-color: #0369a1;
         }
+    
+        /* Janela institucional de confirmação */
+        .sucesso-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(15, 23, 42, 0.62);
+        }
+
+        .sucesso-modal {
+            width: 100%;
+            max-width: 510px;
+            padding: 30px;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            animation: sucessoEntrada 0.2s ease-out;
+        }
+
+        .sucesso-icone {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            background: #dcfce7;
+            color: #15803d;
+            font-size: 34px;
+            font-weight: bold;
+        }
+
+        .sucesso-modal h2 {
+            margin: 0 0 12px;
+            color: #166534;
+            font-size: 23px;
+        }
+
+        .sucesso-protocolo {
+            margin: 18px 0;
+            padding: 13px;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            background: #f0f9ff;
+            color: #075985;
+            font-size: 17px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .sucesso-texto {
+            margin: 0;
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .sucesso-modal button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 13px;
+            border: 0;
+            border-radius: 7px;
+            background: #0284c7;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .sucesso-modal button:hover {
+            background: #0369a1;
+        }
+
+        @keyframes sucessoEntrada {
+            from { opacity: 0; transform: translateY(8px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @media (max-width: 480px) {
+            .sucesso-modal { padding: 24px 20px; }
+            .sucesso-modal h2 { font-size: 21px; }
+        }
+
     </style>
 </head>
 <body>
 
+
+<div id="modalSucesso" class="sucesso-overlay" role="dialog"
+     aria-modal="true" aria-labelledby="tituloSucesso">
+    <div class="sucesso-modal">
+        <div class="sucesso-icone" aria-hidden="true">✓</div>
+        <h2 id="tituloSucesso">Solicitação recebida!</h2>
+        <p class="sucesso-texto">Sua solicitação foi registrada com sucesso.</p>
+        <div class="sucesso-protocolo">
+            Protocolo: <span id="protocoloSucesso"></span>
+        </div>
+        <p class="sucesso-texto">
+            Uma cópia em PDF da solicitação será enviada para o e-mail informado.
+            <br><br>
+            A solicitação será avaliada pela equipe do Laboratório de Síntese e
+            Raios-X quanto à viabilidade técnica, às características das amostras
+            e à disponibilidade do equipamento. O agendamento e as orientações
+            para entrega das amostras serão informados posteriormente.
+        </p>
+        <button type="button" id="fecharModalSucesso">OK, ENTENDI</button>
+    </div>
+</div>
+
+
+<script>
+  // Fechamento da janela de confirmação personalizada.
+  (function () {
+    const modal = document.getElementById("modalSucesso");
+    const botaoFechar = document.getElementById("fecharModalSucesso");
+
+    if (modal && botaoFechar) {
+      botaoFechar.addEventListener("click", function () {
+        modal.style.display = "none";
+      });
+
+      modal.addEventListener("click", function (event) {
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && modal.style.display === "flex") {
+          modal.style.display = "none";
+        }
+      });
+    }
+  })();
+</script>
 <div class="form-container">
     
     <!-- Cabeçalho Textual -->
     <div class="institutional-header">
-        <div class="header-title">FORMULÁRIO E SISTEMA DE SOLICITAÇÃO DE ANÁLISES E MEDIDAS</div>
+        <div class="header-title">FORMULÁRIO DE SOLICITAÇÃO DE ANÁLISES E MEDIDAS</div>
         <div class="header-subtitle">Laboratório de Síntese e Raios-X — LSRX</div>
         <div class="header-subtitle">Laboratório de Deposição de Filmes Finos — LDFF</div>
         <div class="header-institution">Universidade Federal Rural do Semi-Árido — UFERSA</div>
@@ -412,11 +551,10 @@
             <textarea id="detalhes-risco" rows="3" placeholder="Descreva os cuidados de manuseio, EPIs necessários, etc."></textarea>
         </div>
 
-        <div class="form-group">
-            <label for="documento-seguranca">FISPQ/FDS ou documentação de segurança</label>
-            <input type="file" id="documento-seguranca" name="documento-seguranca" accept=".pdf,.doc,.docx,.jpg,.png" style="padding: 9px; background-color: #f8fafc;">
-            <small style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">Formatos aceitos: PDF, Word ou Imagem (opcional).</small>
-        </div>
+        <!-- Campo FISPQ/FDS desativado visualmente. Mantido no DOM para preservar
+             a compatibilidade com o JavaScript e com o painel administrativo. -->
+        <input type="file" id="documento-seguranca" name="documento-seguranca"
+               accept=".pdf,.doc,.docx,.jpg,.png" style="display: none;">
 
         <!-- 7. Condições da Análise -->
         <div class="section-title">7. Condições da Análise</div>
@@ -1571,13 +1709,9 @@ async function gerarPdfParaEmail(dados) {
 // SUCESSO IMEDIATO PARA O USUÁRIO
 // ======================================================
 
-const mensagemSucesso =
-  `Solicitação recebida com sucesso.\n` +
-  `Protocolo: ${codigoGerado}\n\n` +
-  `Uma cópia em PDF da solicitação será enviada para o e-mail informado.\n\n` +
-  `A solicitação será avaliada pela equipe do Laboratório de Síntese e Raios-X quanto à viabilidade técnica, às características das amostras e à disponibilidade do equipamento. O agendamento e as orientações para entrega das amostras serão informados posteriormente.`;
-
-alert(mensagemSucesso);
+// Exibe a confirmação dentro da própria página, sem mostrar o endereço do site.
+document.getElementById("protocoloSucesso").textContent = codigoGerado;
+document.getElementById("modalSucesso").style.display = "flex";
 
 // Libera e limpa o formulário imediatamente
 form.reset();
