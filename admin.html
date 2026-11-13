@@ -90,7 +90,18 @@
         }
 
         #btnToggleEquipamentos { background-color: #475569; }
+        #btnToggleEquipamentos { background-color: #475569; }
         #btnToggleEquipamentos:hover { background-color: #334155; }
+        .btn-icone { width: 38px; height: 38px; padding: 0; justify-content: center; font-size: 15px; }
+        .btn-usuarios { background-color: #7c3aed; }
+        .btn-usuarios:hover { background-color: #6d28d9; }
+        #painelResponsaveis { display:none; width:100%; margin: 0 0 15px; padding:16px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; }
+        .responsaveis-form { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+        .responsaveis-form input { flex:1; min-width:180px; padding:9px; border:1px solid #cbd5e1; border-radius:6px; }
+        .responsavel-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 10px; background:#fff; border:1px solid #e2e8f0; border-radius:7px; margin-top:7px; }
+        .responsavel-acoes { display:flex; gap:6px; }
+        .responsavel-acoes button { border:0; border-radius:5px; padding:7px 9px; cursor:pointer; }
+        @media (max-width: 900px) { .btn-icone { width:36px; height:36px; } }
 
         @media (max-width: 900px) {
             .actions-menu { justify-content: flex-start; }
@@ -535,10 +546,11 @@
             <p style="color: #64748b; font-size: 13px;">Responsável Técnico: <span id="displayResponsavel">Não logado</span> </p>
         </div>
         <div class="actions-menu">
-            <button class="btn btn-csv" id="btnExportarCsv"><i class="fa-solid fa-file-csv"></i><span>CSV</span></button>
-            <button class="btn" id="btnToggleEquipamentos" type="button" aria-expanded="false" aria-controls="painelEquipamentos"><i class="fa-solid fa-screwdriver-wrench"></i><span>Equipamentos</span></button>
-            <button class="btn btn-refresh" id="btnRecarregar"><i class="fa-solid fa-rotate"></i><span>Atualizar</span></button>
-            <button class="btn btn-print" id="btnImprimir"><i class="fa-solid fa-print"></i><span>Imprimir</span></button>
+            <button class="btn btn-csv btn-icone" id="btnExportarCsv" title="Exportar CSV" aria-label="Exportar CSV"><i class="fa-solid fa-file-csv"></i></button>
+            <button class="btn btn-icone" id="btnToggleEquipamentos" type="button" title="Equipamentos" aria-label="Equipamentos" aria-expanded="false" aria-controls="painelEquipamentos"><i class="fa-solid fa-screwdriver-wrench"></i></button>
+            <button class="btn btn-usuarios btn-icone" id="btnToggleResponsaveis" type="button" title="Gerenciar responsáveis (acesso restrito)" aria-label="Gerenciar responsáveis" aria-expanded="false" aria-controls="painelResponsaveis" style="display:none"><i class="fa-solid fa-users-gear"></i></button>
+            <button class="btn btn-refresh btn-icone" id="btnRecarregar" title="Atualizar" aria-label="Atualizar"><i class="fa-solid fa-rotate"></i></button>
+            <button class="btn btn-print btn-icone" id="btnImprimir" title="Imprimir" aria-label="Imprimir"><i class="fa-solid fa-print"></i></button>
             <div class="limite-toolbar" aria-label="Controle de limite mensal">
                 <label for="inputLimiteMensal">Limite mensal:</label>
                 <input type="number" id="inputLimiteMensal" min="1" placeholder="Ex: 50">
@@ -558,6 +570,20 @@
             </div>
             <div id="mensagemEquipamentosAdmin" role="status" style="margin-top:10px; font-size:13px;"></div>
         </div>
+    </div>
+
+    <!-- CRUD de responsáveis: exibido somente após login com a senha administrativa 1234 -->
+    <div id="painelResponsaveis">
+        <h3 style="color:#1e293b;font-size:16px;"><i class="fa-solid fa-users-gear"></i> Gerenciar responsáveis</h3>
+        <p style="color:#64748b;font-size:13px;margin-top:5px;">Cadastre, edite ou exclua acessos já armazenados na coleção responsaveis.</p>
+        <form class="responsaveis-form" id="formResponsavel">
+            <input type="text" id="nomeNovoResponsavel" placeholder="Nome do responsável" required>
+            <input type="password" id="senhaNovoResponsavel" placeholder="Senha de acesso" required autocomplete="new-password">
+            <button class="btn btn-config" type="submit"><i class="fa-solid fa-floppy-disk"></i> Salvar responsável</button>
+            <button class="btn" style="background:#64748b" type="button" id="btnCancelarEdicaoResponsavel" hidden>Cancelar</button>
+        </form>
+        <div id="listaResponsaveisAdmin"></div>
+        <div id="mensagemResponsaveisAdmin" role="status" style="margin-top:10px;font-size:13px;"></div>
     </div>
 
     <!-- Indicadores -->
@@ -613,7 +639,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, deleteDoc, doc, updateDoc, setDoc, getDoc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, getDoc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA17WRxKTHh9Qz1ZMewPl_-zLgXbbu2wmw",
@@ -635,6 +661,7 @@
     const inputSenhaAcesso = document.getElementById('inputSenhaAcesso');
     const btnEntrarAdmin = document.getElementById('btnEntrarAdmin');
     const authErrorMsg = document.getElementById('authErrorMsg');
+    window.addEventListener('load', () => inputSenhaAcesso.focus());
 
     adminContainer.style.display = 'none';
 
@@ -655,17 +682,21 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
             const snapshot = await getDocs(q);
             
             let encontrado = null;
-            snapshot.forEach((doc) => {
-                if (doc.data().senha === senhaDigitada) {
-                    encontrado = doc.data().nome;
+            snapshot.forEach((registro) => {
+                if (registro.data().senha === senhaDigitada) {
+                    encontrado = { id: registro.id, ...registro.data() };
                 }
             });
 
             if (encontrado) {
-                nomeResponsavelLogado = encontrado;
+                nomeResponsavelLogado = encontrado.nome || "Responsável";
                 document.getElementById('displayResponsavel').innerText = nomeResponsavelLogado;
                 authOverlay.style.display = 'none';
                 adminContainer.style.display = 'block';
+                // A senha 1234 identifica o responsável administrador, que recebe acesso ao CRUD.
+                if (senhaDigitada === '1234') {
+                    document.getElementById('btnToggleResponsaveis').style.display = 'flex';
+                }
                 carregarSolicitacoes();
                 carregarEquipamentosAdmin();
             } else {
@@ -747,8 +778,166 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
         painelEquipamentos.style.display = estaVisivel ? 'none' : 'flex';
         btnToggleEquipamentos.setAttribute('aria-expanded', String(!estaVisivel));
         btnToggleEquipamentos.innerHTML = estaVisivel
-            ? '<i class="fa-solid fa-screwdriver-wrench"></i><span>Equipamentos</span>'
-            : '<i class="fa-solid fa-eye-slash"></i><span>Ocultar equipamentos</span>';
+            ? '<i class="fa-solid fa-screwdriver-wrench"></i>'
+            : '<i class="fa-solid fa-eye-slash"></i>';
+        btnToggleEquipamentos.title = estaVisivel ? 'Mostrar equipamentos' : 'Ocultar equipamentos';
+    });
+
+    // --- CRUD DE RESPONSÁVEIS (coleção existente: responsaveis) ---
+    const btnToggleResponsaveis = document.getElementById('btnToggleResponsaveis');
+    const painelResponsaveis = document.getElementById('painelResponsaveis');
+    const formResponsavel = document.getElementById('formResponsavel');
+    const nomeNovoResponsavel = document.getElementById('nomeNovoResponsavel');
+    const senhaNovoResponsavel = document.getElementById('senhaNovoResponsavel');
+    const listaResponsaveisAdmin = document.getElementById('listaResponsaveisAdmin');
+    const mensagemResponsaveisAdmin = document.getElementById('mensagemResponsaveisAdmin');
+    const btnCancelarEdicaoResponsavel = document.getElementById('btnCancelarEdicaoResponsavel');
+    let idResponsavelEmEdicao = null;
+
+    btnToggleResponsaveis.addEventListener('click', async () => {
+        const abrir = painelResponsaveis.style.display === 'none';
+        painelResponsaveis.style.display = abrir ? 'block' : 'none';
+        btnToggleResponsaveis.setAttribute('aria-expanded', String(abrir));
+        if (abrir) await carregarResponsaveisAdmin();
+    });
+
+    function limparFormularioResponsavel() {
+        idResponsavelEmEdicao = null;
+        formResponsavel.reset();
+        senhaNovoResponsavel.disabled = false;
+        senhaNovoResponsavel.required = true;
+        senhaNovoResponsavel.placeholder = 'Senha de acesso';
+        btnCancelarEdicaoResponsavel.hidden = true;
+        formResponsavel.querySelector('button[type="submit"]').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar responsável';
+    }
+
+    btnCancelarEdicaoResponsavel.addEventListener('click', limparFormularioResponsavel);
+
+    async function carregarResponsaveisAdmin() {
+        listaResponsaveisAdmin.innerHTML = '<p style="color:#64748b;font-size:13px;">Carregando responsáveis...</p>';
+        try {
+            const snap = await getDocs(collection(db, 'responsaveis'));
+            listaResponsaveisAdmin.innerHTML = '';
+            if (snap.empty) {
+                listaResponsaveisAdmin.innerHTML = '<p style="color:#64748b;font-size:13px;">Nenhum responsável cadastrado.</p>';
+                return;
+            }
+            snap.forEach(registro => {
+                const dados = registro.data();
+                const item = document.createElement('div');
+                item.className = 'responsavel-item';
+                const info = document.createElement('div');
+                const nome = document.createElement('strong');
+                nome.textContent = dados.nome || '(Sem nome)';
+                const detalhe = document.createElement('div');
+                detalhe.style.cssText = 'font-size:12px;color:#64748b;margin-top:3px;';
+                detalhe.textContent = `Senha: ${'•'.repeat(Math.min(String(dados.senha || '').length, 12))}`;
+                const verSenha = document.createElement('button');
+                verSenha.type = 'button';
+                verSenha.title = 'Mostrar senha';
+                verSenha.setAttribute('aria-label', `Mostrar senha de ${dados.nome || 'responsável'}`);
+                verSenha.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                verSenha.style.cssText = 'margin-left:7px;background:#e2e8f0;color:#334155;border:0;border-radius:6px;padding:4px 8px;cursor:pointer;';
+                let senhaVisivel = false;
+                verSenha.addEventListener('click', () => {
+                    senhaVisivel = !senhaVisivel;
+                    detalhe.textContent = senhaVisivel
+                        ? `Senha: ${String(dados.senha || '(vazia)')}`
+                        : `Senha: ${'•'.repeat(Math.min(String(dados.senha || '').length, 12))}`;
+                    verSenha.title = senhaVisivel ? 'Ocultar senha' : 'Mostrar senha';
+                    verSenha.setAttribute('aria-label', verSenha.title);
+                    verSenha.innerHTML = senhaVisivel
+                        ? '<i class="fa-solid fa-eye-slash"></i>'
+                        : '<i class="fa-solid fa-eye"></i>';
+                });
+                info.append(nome, detalhe, verSenha);
+                const acoes = document.createElement('div');
+                acoes.className = 'responsavel-acoes';
+                const editar = document.createElement('button');
+                editar.type = 'button'; editar.title = 'Editar'; editar.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                editar.style.background = '#dbeafe'; editar.style.color = '#1d4ed8';
+                editar.addEventListener('click', () => {
+                    idResponsavelEmEdicao = registro.id;
+                    nomeNovoResponsavel.value = dados.nome || '';
+                    // A senha do administrador (1234) permanece protegida.
+                    // Para os demais responsáveis, a senha pode ser alterada.
+                    senhaNovoResponsavel.disabled = dados.senha === '1234';
+                    senhaNovoResponsavel.required = false;
+                    senhaNovoResponsavel.value = '';
+                    senhaNovoResponsavel.placeholder = dados.senha === '1234'
+                        ? 'Senha administrativa protegida'
+                        : 'Nova senha (deixe vazio para manter a atual)';
+                    btnCancelarEdicaoResponsavel.hidden = false;
+                    formResponsavel.querySelector('button[type="submit"]').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar';
+                    nomeNovoResponsavel.focus();
+                });
+                const excluir = document.createElement('button');
+                excluir.type = 'button'; excluir.title = 'Excluir'; excluir.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                excluir.style.background = '#fee2e2'; excluir.style.color = '#b91c1c';
+                excluir.addEventListener('click', async () => {
+                    if (dados.senha === '1234') {
+                        alert('O responsável administrador (senha 1234) não pode ser excluído por este painel.');
+                        return;
+                    }
+                    if (!confirm(`Deseja excluir o responsável "${dados.nome || ''}"?`)) return;
+                    try {
+                        await deleteDoc(doc(db, 'responsaveis', registro.id));
+                        mensagemResponsaveisAdmin.style.color = '#15803d';
+                        mensagemResponsaveisAdmin.textContent = 'Responsável excluído.';
+                        await carregarResponsaveisAdmin();
+                    } catch (e) {
+                        console.error(e);
+                        mensagemResponsaveisAdmin.style.color = '#b91c1c';
+                        mensagemResponsaveisAdmin.textContent = 'Não foi possível excluir. Verifique as regras do Firestore.';
+                    }
+                });
+                acoes.append(editar, excluir);
+                item.append(info, acoes);
+                listaResponsaveisAdmin.appendChild(item);
+            });
+        } catch (e) {
+            console.error('Erro ao listar responsáveis:', e);
+            listaResponsaveisAdmin.innerHTML = '<p style="color:#b91c1c;font-size:13px;">Erro ao carregar. Verifique as regras do Firestore.</p>';
+        }
+    }
+
+    formResponsavel.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nome = nomeNovoResponsavel.value.trim();
+        const senha = senhaNovoResponsavel.value.trim();
+        if (!nome || (!senha && idResponsavelEmEdicao === null)) return;
+        if (senha === '1234' && idResponsavelEmEdicao === null) {
+            mensagemResponsaveisAdmin.style.color = '#b91c1c';
+            mensagemResponsaveisAdmin.textContent = 'A senha 1234 é reservada ao responsável administrador.';
+            return;
+        }
+        try {
+            if (idResponsavelEmEdicao) {
+                const dadosAtualizados = { nome };
+                // Campo vazio mantém a senha atual; preenchido altera a senha.
+                if (senha) {
+                    if (senha === '1234') {
+                        mensagemResponsaveisAdmin.style.color = '#b91c1c';
+                        mensagemResponsaveisAdmin.textContent = 'A senha 1234 é reservada ao acesso administrador.';
+                        return;
+                    }
+                    dadosAtualizados.senha = senha;
+                }
+                await updateDoc(doc(db, 'responsaveis', idResponsavelEmEdicao), dadosAtualizados);
+                mensagemResponsaveisAdmin.style.color = '#15803d';
+                mensagemResponsaveisAdmin.textContent = senha ? 'Responsável e senha atualizados.' : 'Responsável atualizado. A senha foi mantida.';
+            } else {
+                await addDoc(collection(db, 'responsaveis'), { nome, senha });
+                mensagemResponsaveisAdmin.style.color = '#15803d';
+                mensagemResponsaveisAdmin.textContent = 'Responsável cadastrado.';
+            }
+            limparFormularioResponsavel();
+            await carregarResponsaveisAdmin();
+        } catch (e) {
+            console.error('Erro ao salvar responsável:', e);
+            mensagemResponsaveisAdmin.style.color = '#b91c1c';
+            mensagemResponsaveisAdmin.textContent = 'Não foi possível salvar. Verifique as regras do Firestore.';
+        }
     });
 
     const nomesAmigaveisEquipamentos = {
@@ -981,6 +1170,11 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
             const codigoProtocolo = dados.codigoProtocolo || dados.codigo || 'N/A';
             const dataEnvioFormatada = formatarData(dados.dataEnvio || dados.data || dados.criadoEm);
             const nomeSolicitante = dados.nome || dados.solicitante || 'N/A';
+            const telefoneSolicitante = String(dados.telefone || dados.celular || '').replace(/\D/g, '');
+            const telefoneWhatsApp = telefoneSolicitante ? (telefoneSolicitante.startsWith('55') ? telefoneSolicitante : '55' + telefoneSolicitante) : '';
+            const botaoWhatsApp = telefoneWhatsApp
+                ? `<a href="https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent('Olá, ' + nomeSolicitante + '. Estou entrando em contato sobre sua solicitação ao LSRX/LDFF.') }" target="_blank" data-lsrx-whatsapp="1" rel="noopener" title="Enviar WhatsApp para ${escapeHtml(nomeSolicitante)}" aria-label="Enviar WhatsApp" style="display:inline-flex;align-items:center;justify-content:center;margin-left:6px;width:22px;height:22px;border-radius:5px;background:#dcfce7;color:#16a34a;text-decoration:none;"><i class="fa-brands fa-whatsapp"></i></a>`
+                : '';
             const categoria = dados.categoria || dados.tipoUsuario || '';
             const origem = dados.origem || dados.instituicao || '';
             const tecnicasFormatadas = dados.tecnicas || dados.equipamento || dados.tecnicaSelecionada || 'N/A';
@@ -1006,7 +1200,7 @@ inputSenhaAcesso.addEventListener('keydown', (e) => {
             tr.innerHTML = `
                 <td><strong>${escapeHtml(codigoProtocolo)}</strong></td>
                 <td>${escapeHtml(dataEnvioFormatada)}</td>
-                <td class="solicitante-cell"><strong>${escapeHtml(nomeSolicitante)}</strong><small>${escapeHtml(categoria)}${categoria && origem ? ' • ' : ''}${escapeHtml(origem)}</small></td>
+                <td class="solicitante-cell"><strong>${escapeHtml(nomeSolicitante)}${botaoWhatsApp}</strong><small>${escapeHtml(categoria)}${categoria && origem ? ' • ' : ''}${escapeHtml(origem)}</small></td>
                 <td class="tecnica-cell">${escapeHtml(tecnicasFormatadas)}</td>
                 <td class="delivery-cell">${escapeHtml(dataSugeridaFormatada)}</td>
                 <td class="status-cell"><span class="tag-status ${corStatusClass}">${escapeHtml(statusAtual)}</span></td>
